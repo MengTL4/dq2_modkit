@@ -228,6 +228,21 @@ Do not commit or manually maintain NW runtime files. Implement `setup-runtime.ps
 - Extracted save harness bytecode from current `www/js/*.jsc.pak`.
 - Missing `node_modules` under `tools` and `runtime/save-harness`.
 
+When installing npm dependencies, do not mutate global npm config. Call npm with an explicit registry:
+
+```powershell
+npm.cmd install --omit=dev --registry <registry>
+```
+
+Default registry order:
+
+```text
+https://mirrors.tuna.tsinghua.edu.cn/npm/
+https://registry.npmmirror.com
+```
+
+Expose `-NpmRegistry` and `DQ2_NPM_REGISTRY` for users who need another mirror or internal registry. If the user explicitly sets a registry, fail fast on that registry instead of silently trying another source.
+
 Targets:
 
 ```text

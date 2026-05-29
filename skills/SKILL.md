@@ -43,12 +43,13 @@ When building from scratch or adapting to a changed game, read:
 3. Choose the runtime bridge strategy: create an independent NW launcher, open the original `www/index.html`, and inject `runtime/bridge/page-bridge.js` with `inject_js_start`.
 4. Scaffold `dq2_modkit` with `tools`, `app/gui`, `runtime/trainer`, `runtime/bridge`, `runtime/save-harness`, `runtime/bridge-state`, `output`, `docs`, and `config.example.json`.
 5. Implement shared game-root resolution before runtime generation. Resolve `-GameRoot`, `DQ2_GAME_ROOT`, `config.local.json`, then the legacy parent-directory layout.
-6. Implement runtime generation before features. `setup-runtime.ps1` must create hardlinks/junctions from the resolved game install and fall back to copying runtime files if hardlinks fail; `clean-runtime.ps1` must safely remove only generated artifacts.
-7. Implement extractors next: `data.pak`, `useData`, and saves. Use structured parsers and cryptographic verification; do not rely on ad hoc text parsing.
-8. Implement the runtime bridge command loop over local JSONL files, then expose commands through `trainer-send.mjs`.
-9. Build the external GUI last. It should read exported data for searchable lists and communicate only through the bridge-state command queue.
-10. Validate each layer independently: setup/clean, JS syntax, data extraction, save round-trip encryption, bridge status, GUI smoke.
-11. Update usage and technical docs so the project remains reproducible after game updates and portable across user install paths.
+6. Implement runtime generation before features. `setup-runtime.ps1` must create hardlinks/junctions from the resolved game install and fall back to copying runtime files if hardlinks fail; npm dependency installation must use an explicit mirror registry, defaulting to the Tsinghua npm URL with `npmmirror` fallback and supporting `-NpmRegistry`/`DQ2_NPM_REGISTRY`.
+7. Implement `clean-runtime.ps1` so it safely removes only generated artifacts.
+8. Implement extractors next: `data.pak`, `useData`, and saves. Use structured parsers and cryptographic verification; do not rely on ad hoc text parsing.
+9. Implement the runtime bridge command loop over local JSONL files, then expose commands through `trainer-send.mjs`.
+10. Build the external GUI last. It should read exported data for searchable lists and communicate only through the bridge-state command queue.
+11. Validate each layer independently: setup/clean, JS syntax, data extraction, save round-trip encryption, bridge status, GUI smoke.
+12. Update usage and technical docs so the project remains reproducible after game updates and portable across user install paths.
 
 ## Implementation Rules
 

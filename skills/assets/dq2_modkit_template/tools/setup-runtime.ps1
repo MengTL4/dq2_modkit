@@ -1,6 +1,7 @@
 param(
   [switch]$Force,
-  [string]$GameRoot
+  [string]$GameRoot,
+  [string]$NpmRegistry
 )
 
 $ErrorActionPreference = "Stop"
@@ -33,11 +34,22 @@ $Targets = @("app\gui", "runtime\trainer", "runtime\save-harness")
 function Install-NodeDependencies {
   param(
     [string]$Directory,
-    [string]$Label
+    [string]$Label,
+    [string]$NpmRegistry
   )
 
   $modules = Join-Path $Directory "node_modules"
   if (Test-Path -LiteralPath $modules) { return }
+
+  $registries = New-Object System.Collections.Generic.List[string]
+  if ($NpmRegistry) {
+    $registries.Add($NpmRegistry)
+  } elseif ($env:DQ2_NPM_REGISTRY) {
+    $registries.Add($env:DQ2_NPM_REGISTRY)
+  } else {
+    $registries.Add("https://mirrors.tuna.tsinghua.edu.cn/npm/")
+    $registries.Add("https://registry.npmmirror.com")
+  }
 
   Write-Host "Installing $Label dependencies..."
   Push-Location $Directory
@@ -46,9 +58,20 @@ function Install-NodeDependencies {
     if (-not $npmCommand) {
       $npmCommand = (Get-Command npm -ErrorAction Stop).Source
     }
-    & $npmCommand install --omit=dev
-    if ($LASTEXITCODE -ne 0) {
-      throw "$Label npm install failed with exit code $LASTEXITCODE"
+
+    $lastExitCode = 0
+    $lastRegistry = $null
+    foreach ($registry in $registries) {
+      $lastRegistry = $registry
+      Write-Host "Using npm registry: $registry"
+      & $npmCommand install --omit=dev --registry $registry
+      $lastExitCode = $LASTEXITCODE
+      if ($lastExitCode -eq 0) { return }
+      Write-Warning "$Label npm install failed with registry $registry, exit code $lastExitCode"
+    }
+
+    if ($lastExitCode -ne 0) {
+      throw "$Label npm install failed with registry $lastRegistry, exit code $lastExitCode"
     }
   } finally {
     Pop-Location
@@ -62,7 +85,11 @@ function Remove-GeneratedPath {
   if ($item.PSIsContainer -and -not $item.LinkType) {
     throw "Refusing to remove non-link directory: $Path"
   }
-  Remove-Item -LiteralPath $Path -Force
+  if ($item.PSIsContainer -and $item.LinkType) {
+    [System.IO.Directory]::Delete($item.FullName, $false)
+  } else {
+    Remove-Item -LiteralPath $Path -Force
+  }
 }
 
 foreach ($targetRel in $Targets) {
@@ -107,7 +134,7 @@ if ($LASTEXITCODE -ne 0) {
   throw "extract-bytecode-bundles.mjs failed with exit code $LASTEXITCODE"
 }
 
-Install-NodeDependencies -Directory $PSScriptRoot -Label "tools"
-Install-NodeDependencies -Directory (Join-Path $ProjectRoot "runtime\save-harness") -Label "save-harness"
+Install-NodeDependencies -Directory $PSScriptRoot -Label "tools" -NpmRegistry $NpmRegistry
+Install-NodeDependencies -Directory (Join-Path $ProjectRoot "runtime\save-harness") -Label "save-harness" -NpmRegistry $NpmRegistry
 
 Write-Host "Runtime links refreshed from $GameRoot"

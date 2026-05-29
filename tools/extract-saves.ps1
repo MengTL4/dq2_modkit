@@ -1,5 +1,6 @@
 param(
-  [string]$GameRoot
+  [string]$GameRoot,
+  [string]$NpmRegistry
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,7 +13,7 @@ $Runtime = Join-Path $ProjectRoot "runtime\save-harness"
 $GameExe = Join-Path $Runtime "Game.exe"
 
 if (-not (Test-Path -LiteralPath $GameExe)) {
-  & (Join-Path $PSScriptRoot "setup-runtime.ps1") -GameRoot $GameRoot
+  & (Join-Path $PSScriptRoot "setup-runtime.ps1") -GameRoot $GameRoot -NpmRegistry $NpmRegistry
 }
 
 if (-not (Test-Path -LiteralPath $GameExe)) {

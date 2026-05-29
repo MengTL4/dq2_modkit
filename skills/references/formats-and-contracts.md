@@ -430,6 +430,17 @@ npm.cmd --version
 
 If PowerShell blocks scripts, prefix `.ps1` checks with `powershell -NoProfile -ExecutionPolicy Bypass -File`.
 
+Npm registry contract:
+
+```text
+Default first: https://mirrors.tuna.tsinghua.edu.cn/npm/
+Default fallback: https://registry.npmmirror.com
+Override parameter: -NpmRegistry
+Override environment: DQ2_NPM_REGISTRY
+```
+
+Only `setup-runtime.ps1` installs dependencies directly. Scripts that may auto-run setup should pass through `-NpmRegistry`.
+
 Syntax:
 
 ```powershell

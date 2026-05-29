@@ -1,5 +1,6 @@
 param(
-  [string]$GameRoot
+  [string]$GameRoot,
+  [string]$NpmRegistry
 )
 
 $ErrorActionPreference = "Stop"
@@ -9,7 +10,7 @@ $ProjectRoot = (Resolve-Path (Join-Path $ToolDir "..")).Path
 $GameRoot = Resolve-Dq2GameRoot -ProjectRoot $ProjectRoot -GameRoot $GameRoot
 Set-Dq2RuntimeEnvironment -ProjectRoot $ProjectRoot -GameRoot $GameRoot
 
-& (Join-Path $ToolDir "setup-runtime.ps1") -GameRoot $GameRoot
+& (Join-Path $ToolDir "setup-runtime.ps1") -GameRoot $GameRoot -NpmRegistry $NpmRegistry
 
 & node (Join-Path $ToolDir "extract-data-pak.mjs")
 if ($LASTEXITCODE -ne 0) { throw "extract-data-pak.mjs failed with exit code $LASTEXITCODE" }
@@ -17,4 +18,4 @@ if ($LASTEXITCODE -ne 0) { throw "extract-data-pak.mjs failed with exit code $LA
 & node (Join-Path $ToolDir "extract-usedata.mjs")
 if ($LASTEXITCODE -ne 0) { throw "extract-usedata.mjs failed with exit code $LASTEXITCODE" }
 
-& (Join-Path $ToolDir "extract-saves.ps1") -GameRoot $GameRoot
+& (Join-Path $ToolDir "extract-saves.ps1") -GameRoot $GameRoot -NpmRegistry $NpmRegistry

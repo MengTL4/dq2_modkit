@@ -97,6 +97,18 @@ skills/                  复刻本项目用的 Codex skill
 
 `setup-runtime.ps1` 还会安装工具脚本依赖，并从当前 `www/js/*.jsc.pak` 重新提取存档解密 harness 需要的字节码。也就是说游戏更新后刷新脚本即可，不需要手动把运行时文件搬进项目。
 
+依赖安装默认会先走清华 npm 镜像地址，失败后自动退到 `https://registry.npmmirror.com`。如需指定其它 npm registry：
+
+```powershell
+.\tools\setup-runtime.ps1 -NpmRegistry "https://registry.npmmirror.com"
+```
+
+也可以设置环境变量：
+
+```powershell
+$env:DQ2_NPM_REGISTRY = "https://registry.npmmirror.com"
+```
+
 需要清空这些生成产物时执行：
 
 ```powershell

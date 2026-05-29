@@ -77,7 +77,9 @@ function Remove-GeneratedItem {
   if ($DryRun) {
     Write-Host "Would remove $Path"
   } else {
-    if ($item.PSIsContainer -and -not $item.LinkType) {
+    if ($item.PSIsContainer -and $item.LinkType) {
+      [System.IO.Directory]::Delete($item.FullName, $false)
+    } elseif ($item.PSIsContainer) {
       Remove-Item -LiteralPath $Path -Recurse -Force
     } else {
       Remove-Item -LiteralPath $Path -Force
