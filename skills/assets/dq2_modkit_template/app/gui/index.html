@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: file:;">
+  <title>大千世界2 修改器</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">LOCAL RUNTIME BRIDGE</div>
+        <h1>大千世界2 修改器</h1>
+      </div>
+      <div class="top-actions">
+        <div id="statusPill" class="status status-idle">未连接</div>
+        <button id="launchBtn" class="primary">启动游戏</button>
+        <button id="refreshBtn" class="ghost">刷新</button>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="sidebar">
+        <section class="panel status-panel">
+          <div class="panel-title">运行状态</div>
+          <dl class="state-list">
+            <div><dt>Bridge</dt><dd id="bridgeState">等待中</dd></div>
+            <div><dt>队伍对象</dt><dd id="partyState">-</dd></div>
+            <div><dt>当前金币</dt><dd id="goldState">-</dd></div>
+            <div><dt>存档目录</dt><dd id="saveState">-</dd></div>
+            <div><dt>当前位置</dt><dd id="mapState">-</dd></div>
+          </dl>
+        </section>
+
+        <section class="panel party-panel">
+          <div class="panel-title">队伍</div>
+          <ul id="partyMembers"></ul>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">文件</div>
+          <div class="button-stack">
+            <button id="openBridgeBtn">打开 Bridge 日志</button>
+            <button id="openSaveBtn">打开存档目录</button>
+            <button id="backupSaveBtn">备份存档</button>
+            <button id="clearEventsBtn">清空事件</button>
+          </div>
+        </section>
+
+        <section class="panel save-files">
+          <div class="panel-title">检测到的存档</div>
+          <ul id="saveFiles"></ul>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <nav class="tool-nav" aria-label="修改器功能分组">
+          <button class="active" data-tool-tab="core">常用</button>
+          <button data-tool-tab="catalog">物品角色</button>
+          <button data-tool-tab="world">地图事件</button>
+          <button data-tool-tab="misc">杂项</button>
+          <button data-tool-tab="debug">调试</button>
+        </nav>
+        <section class="tool-grid">
+          <article class="panel tool-panel" data-tool-panel="core">
+            <div class="panel-title">金币</div>
+            <div class="metric" id="goldMetric">0</div>
+            <div class="row">
+              <input id="goldValue" type="number" min="0" step="1" value="10000">
+              <button id="goldSetBtn">设定</button>
+              <button id="goldAddBtn">增加</button>
+            </div>
+            <div class="preset-row">
+              <button data-gold-add="1000">+1K</button>
+              <button data-gold-add="10000">+10K</button>
+              <button data-gold-add="100000">+100K</button>
+              <button data-gold-set="9999999">MAX</button>
+            </div>
+          </article>
+
+          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="misc">
+            <div class="panel-title">变量 <span id="variableListCount" class="panel-count"></span></div>
+            <div class="row browser-search-row">
+              <input id="variableSearch" type="search" placeholder="搜索变量名称或ID">
+            </div>
+            <div class="row three">
+              <label>
+                <span>ID</span>
+                <input id="variableId" type="text" inputmode="numeric" list="variableOptions" value="1">
+              </label>
+              <label>
+                <span>值</span>
+                <input id="variableValue" type="text" value="999">
+              </label>
+              <button id="variableSetBtn">写入</button>
+            </div>
+            <div id="variableHint" class="hint"></div>
+            <div id="variableList" class="catalog-list system-list"></div>
+          </article>
+
+          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="misc">
+            <div class="panel-title">开关 <span id="switchListCount" class="panel-count"></span></div>
+            <div class="row browser-search-row">
+              <input id="switchSearch" type="search" placeholder="搜索开关名称或ID">
+            </div>
+            <div class="row three">
+              <label>
+                <span>ID</span>
+                <input id="switchId" type="text" inputmode="numeric" list="switchOptions" value="1">
+              </label>
+              <div class="segmented" role="group">
+                <button id="switchOnBtn" class="segment active">ON</button>
+                <button id="switchOffBtn" class="segment">OFF</button>
+              </div>
+              <button id="switchSetBtn">写入</button>
+            </div>
+            <div id="switchHint" class="hint"></div>
+            <div id="switchList" class="catalog-list system-list"></div>
+          </article>
+
+          <article class="panel tool-panel browser-panel wide-panel" data-tool-panel="catalog">
+            <div class="panel-title">物品 <span id="itemListCount" class="panel-count"></span></div>
+            <div class="row item-toolbar">
+              <select id="itemKind">
+                <option value="all">全部</option>
+                <option value="item">物品</option>
+                <option value="weapon">武器</option>
+                <option value="armor">护甲</option>
+              </select>
+              <input id="itemSearch" type="search" placeholder="搜索名称、ID或描述">
+              <label>
+                <span>数量</span>
+                <input id="itemAmount" type="number" step="1" value="1">
+              </label>
+            </div>
+            <div class="row compact-id-row">
+              <label>
+                <span>ID</span>
+                <input id="itemId" type="text" inputmode="numeric" list="allOptions" value="item:1">
+              </label>
+              <button id="itemAddBtn">添加选中</button>
+            </div>
+            <div id="itemHint" class="hint"></div>
+            <div id="itemList" class="catalog-list icon-list"></div>
+          </article>
+
+          <article class="panel tool-panel browser-panel wide-panel" data-tool-panel="catalog">
+            <div class="panel-title">角色编辑 <span id="actorListCount" class="panel-count"></span></div>
+            <div class="row actor-browser-row">
+              <input id="actorSearch" type="search" placeholder="搜索角色名称或ID">
+              <button id="actorUnlockBtn">解锁人物</button>
+            </div>
+            <div id="actorList" class="catalog-list actor-list"></div>
+            <div class="row actor-row">
+              <label>
+                <span>角色ID</span>
+                <input id="actorId" type="text" inputmode="numeric" list="actorOptions" value="1">
+              </label>
+              <label>
+                <span>等级</span>
+                <input id="actorLevel" type="number" min="1" step="1" value="10">
+              </label>
+              <label>
+                <span>经验</span>
+                <input id="actorExp" type="number" step="1" value="1000">
+              </label>
+            </div>
+            <div id="actorHint" class="hint"></div>
+            <div class="preset-row actor-actions">
+              <button id="actorAddBtn">解锁/入队</button>
+              <button id="actorRemoveBtn">离队</button>
+              <button id="actorRecoverBtn">恢复</button>
+              <button id="actorLevelBtn">设级</button>
+              <button id="actorExpBtn">加经验</button>
+            </div>
+            <div class="row vitals-row">
+              <label>
+                <span>HP</span>
+                <input id="actorHp" type="number" step="1" placeholder="空">
+              </label>
+              <label>
+                <span>MP</span>
+                <input id="actorMp" type="number" step="1" placeholder="空">
+              </label>
+              <label>
+                <span>TP</span>
+                <input id="actorTp" type="number" step="1" placeholder="空">
+              </label>
+              <button id="actorVitalsBtn">写入</button>
+            </div>
+            <div class="row param-row">
+              <select id="paramId">
+                <option value="0">最大HP</option>
+                <option value="1">最大MP</option>
+                <option value="2">攻击</option>
+                <option value="3">防御</option>
+                <option value="4">魔攻</option>
+                <option value="5">魔防</option>
+                <option value="6">敏捷</option>
+                <option value="7">幸运</option>
+              </select>
+              <input id="paramValue" type="number" step="1" value="10">
+              <button id="actorParamBtn">加值</button>
+            </div>
+          </article>
+
+          <article class="panel tool-panel browser-panel wide-panel" data-tool-panel="catalog">
+            <div class="panel-title">技能 <span id="skillListCount" class="panel-count"></span></div>
+            <div class="row skill-toolbar">
+              <label>
+                <span>角色ID</span>
+                <input id="skillActorId" type="text" inputmode="numeric" list="actorOptions" value="1">
+              </label>
+              <input id="skillSearch" type="search" placeholder="搜索技能名称、ID或描述">
+            </div>
+            <div class="row skill-row">
+              <label>
+                <span>技能ID</span>
+                <input id="skillId" type="text" inputmode="numeric" list="skillOptions" value="1">
+              </label>
+              <button id="skillLearnBtn">学会</button>
+              <button id="skillForgetBtn">遗忘</button>
+            </div>
+            <div id="skillHint" class="hint"></div>
+            <div id="skillList" class="catalog-list icon-list"></div>
+          </article>
+
+          <article class="panel tool-panel wide-panel" data-tool-panel="misc">
+            <div class="panel-title">敌人图鉴</div>
+            <div class="unlock-grid">
+              <button id="unlockEnemyBookBtn">解锁敌人图鉴</button>
+            </div>
+            <div class="hint">写入配置数据后会调用游戏的配置保存；需要回到图鉴菜单重新打开查看。</div>
+          </article>
+
+          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="world">
+            <div class="panel-title">地图传送 <span id="mapListCount" class="panel-count"></span></div>
+            <div class="row browser-search-row">
+              <input id="mapSearch" type="search" placeholder="搜索地图名称或ID">
+            </div>
+            <div class="row map-row">
+              <label>
+                <span>地图ID</span>
+                <input id="mapId" type="text" inputmode="numeric" list="mapOptions" value="5">
+              </label>
+              <label>
+                <span>X</span>
+                <input id="mapX" type="number" step="1" value="10">
+              </label>
+              <label>
+                <span>Y</span>
+                <input id="mapY" type="number" step="1" value="10">
+              </label>
+              <label>
+                <span>朝向</span>
+                <select id="mapDirection">
+                  <option value="2">下</option>
+                  <option value="4">左</option>
+                  <option value="6">右</option>
+                  <option value="8">上</option>
+                </select>
+              </label>
+              <label>
+                <span>淡入</span>
+                <select id="mapFade">
+                  <option value="0">黑</option>
+                  <option value="1">白</option>
+                  <option value="2">无</option>
+                </select>
+              </label>
+              <button id="mapTransferBtn">传送</button>
+            </div>
+            <div class="preset-row map-actions">
+              <button id="recordPositionBtn">记录当前位置</button>
+              <button id="returnPositionBtn">返回记录点</button>
+              <span id="recordedPosition" class="inline-status">未记录</span>
+            </div>
+            <div id="mapHint" class="hint"></div>
+            <div id="mapList" class="catalog-list system-list"></div>
+          </article>
+
+          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="world">
+            <div class="panel-title">公共事件 <span id="commonEventListCount" class="panel-count"></span></div>
+            <div class="row browser-search-row">
+              <input id="commonEventSearch" type="search" placeholder="搜索公共事件名称或ID">
+            </div>
+            <div class="row compact-id-row">
+              <label>
+                <span>事件ID</span>
+                <input id="commonEventId" type="text" inputmode="numeric" list="commonEventOptions" value="1">
+              </label>
+              <button id="commonEventRunBtn">运行事件</button>
+            </div>
+            <div id="commonEventHint" class="hint"></div>
+            <div id="commonEventList" class="catalog-list system-list"></div>
+          </article>
+
+          <article class="panel tool-panel" data-tool-panel="core">
+            <div class="panel-title">倍率</div>
+            <div class="row rates-row">
+              <label>
+                <span>经验</span>
+                <input id="expRate" type="number" min="0" step="0.1" value="1">
+              </label>
+              <label>
+                <span>金币</span>
+                <input id="goldRate" type="number" min="0" step="0.1" value="1">
+              </label>
+              <label>
+                <span>掉率</span>
+                <input id="dropRate" type="number" min="0" step="0.1" value="1">
+              </label>
+              <label>
+                <span>熟练</span>
+                <input id="skillRate" type="number" min="0" step="0.1" value="1">
+              </label>
+              <button id="ratesApplyBtn">应用</button>
+            </div>
+            <div class="preset-row rate-presets">
+              <button data-rate="5">5x</button>
+              <button data-rate="10">10x</button>
+              <button data-rate="20">20x</button>
+              <button data-rate="50">50x</button>
+              <button data-rate="100">100x</button>
+              <button data-rate="1">重置</button>
+            </div>
+          </article>
+
+          <article class="panel tool-panel" data-tool-panel="core">
+            <div class="panel-title">战斗</div>
+            <div class="battle-switches">
+              <button id="noCostBtn" class="toggle-btn">技能无耗</button>
+              <button id="partyRecoverBtn">队伍恢复</button>
+            </div>
+            <div id="battleState" class="hint"></div>
+          </article>
+
+          <article class="panel tool-panel" data-tool-panel="core">
+            <div class="panel-title">存档</div>
+            <div class="row">
+              <label>
+                <span>槽位</span>
+                <input id="saveSlot" type="number" min="1" step="1" value="1">
+              </label>
+              <button id="saveGameBtn">保存</button>
+              <button id="titleRefreshBtn">刷新标题</button>
+            </div>
+          </article>
+
+          <article class="panel tool-panel" data-tool-panel="debug">
+            <div class="panel-title">自定义命令</div>
+            <textarea id="customCommand" spellcheck="false">{ "type": "ping" }</textarea>
+            <div class="row">
+              <button id="customSendBtn">发送 JSON</button>
+            </div>
+          </article>
+        </section>
+
+        <section class="panel event-panel">
+          <div class="panel-title">事件</div>
+          <div id="eventList" class="event-list"></div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <datalist id="allOptions"></datalist>
+  <datalist id="itemOptions"></datalist>
+  <datalist id="weaponOptions"></datalist>
+  <datalist id="armorOptions"></datalist>
+  <datalist id="actorOptions"></datalist>
+  <datalist id="skillOptions"></datalist>
+  <datalist id="variableOptions"></datalist>
+  <datalist id="switchOptions"></datalist>
+  <datalist id="mapOptions"></datalist>
+  <datalist id="commonEventOptions"></datalist>
+
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+# Node dependencies
+tools/node_modules/
+runtime/save-harness/node_modules/
+
+# Generated output and backups
+output/*
+!output/extract/
+output/extract/*
+!output/extract/.gitkeep
+!output/repack/
+output/repack/*
+!output/repack/.gitkeep
+!output/backup/
+output/backup/*
+!output/backup/.gitkeep
+
+# Runtime bridge state
+runtime/bridge-state/*
+!runtime/bridge-state/.gitkeep
+
+# Generated NW runtime files
+app/gui/*.dll
+app/gui/*.exe
+app/gui/*.pak
+app/gui/*.dat
+app/gui/*.bin
+app/gui/Dictionaries/
+app/gui/locales/
+app/gui/swiftshader/
+
+runtime/trainer/*.dll
+runtime/trainer/*.exe
+runtime/trainer/*.pak
+runtime/trainer/*.dat
+runtime/trainer/*.bin
+runtime/trainer/Dictionaries/
+runtime/trainer/locales/
+runtime/trainer/swiftshader/
+
+runtime/save-harness/*.dll
+runtime/save-harness/*.exe
+runtime/save-harness/*.pak
+runtime/save-harness/*.dat
+runtime/save-harness/*.bin
+runtime/save-harness/*.jsc
+runtime/save-harness/probe-result.json
+runtime/save-harness/Dictionaries/
+runtime/save-harness/locales/
+runtime/save-harness/swiftshader/
+
+# Local logs
+*.log
+npm-debug.log*

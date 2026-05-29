@@ -1,0 +1,13 @@
+{
+  "name": "codex-trainer-runtime",
+  "main": "index.html",
+  "nodejs": true,
+  "node-remote": "<all_urls>",
+  "window": {
+    "title": "Codex Trainer Launcher",
+    "width": 320,
+    "height": 180,
+    "show": false
+  },
+  "chromium-args": "--force-color-profile=srgb --allow-file-access-from-files"
+}

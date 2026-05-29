@@ -1,0 +1,17 @@
+{
+  "name": "codex-trainer-gui",
+  "main": "index.html",
+  "nodejs": true,
+  "node-remote": "<all_urls>",
+  "window": {
+    "title": "大千世界2 修改器",
+    "width": 1120,
+    "height": 760,
+    "min_width": 980,
+    "min_height": 660,
+    "position": "center",
+    "show": true,
+    "frame": true
+  },
+  "chromium-args": "--force-color-profile=srgb --allow-file-access-from-files"
+}

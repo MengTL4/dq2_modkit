@@ -1,0 +1,49 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Codex Trainer Launcher</title>
+<script>
+(function () {
+  const fs = require("fs");
+  const path = require("path");
+  const projectRoot = path.resolve(process.cwd(), "..", "..");
+  const root = path.resolve(projectRoot, "..");
+  process.env.DQ2_MODKIT_ROOT = projectRoot;
+  process.env.DQ2_GAME_ROOT = root;
+  const logDir = path.join(projectRoot, "runtime", "bridge-state");
+  fs.mkdirSync(logDir, { recursive: true });
+  const logPath = path.join(logDir, "launcher.log");
+
+  function log(message, extra) {
+    fs.appendFileSync(logPath, `[${new Date().toISOString()}] ${message}${extra ? " " + JSON.stringify(extra) : ""}\n`, "utf8");
+  }
+
+  try {
+    process.chdir(root);
+    const gameIndex = path.join(root, "www", "index.html");
+    const bridgeScript = path.join(projectRoot, "runtime", "bridge", "page-bridge.js");
+    const gameUrl = "file:///" + gameIndex.replace(/\\/g, "/");
+    log("opening game", { root, gameUrl, bridgeScript });
+    nw.Window.open(gameUrl, {
+      title: "大千世界2",
+      width: 1280,
+      height: 720,
+      show: true,
+      frame: true,
+      position: "center",
+      inject_js_start: bridgeScript
+    }, function (win) {
+      log("game window opened");
+      try {
+        nw.Window.get().hide();
+      } catch (_) {}
+      win.on("closed", function () {
+        log("game window closed");
+        nw.App.quit();
+      });
+    });
+  } catch (error) {
+    log("launcher failed", { error: String(error && error.stack || error) });
+    throw error;
+  }
+})();
+</script>

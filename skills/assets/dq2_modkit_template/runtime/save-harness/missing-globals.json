@@ -1,0 +1,10 @@
+[
+  "PIXI",
+  "Window_SaveInfo",
+  "Window_ItemActionCommand",
+  "ItemManager",
+  "Sprite_Keyboard",
+  "Window_BattleSideStates",
+  "Window_QuestList",
+  "Window_QuestData"
+]

@@ -1,0 +1,4 @@
+interface:
+  display_name: "DQ2 Modkit Builder"
+  short_description: "从零复刻本地NW/RPGMaker修改器完整项目流程"
+  default_prompt: "Use $dq2-modkit-builder to rebuild the local DQ2 NW/RPG Maker modkit from scratch."

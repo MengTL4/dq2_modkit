@@ -44,7 +44,6 @@ output/extract/          解密导出结果
 output/repack/           重新加密输出
 output/backup/           GUI 备份目录
 docs/                    使用和技术文档
-skills/                  复刻本项目用的 Codex skill
 ```
 
 这个目录应保留在游戏根目录下。工具通过 `dq2_modkit` 的父目录定位原游戏文件。
@@ -74,21 +73,3 @@ cd "dq2_modkit\tools"
 ```powershell
 .\clean-runtime.ps1 -IncludeDependencies
 ```
-
-## 复刻 Skill
-
-项目内置了一个用于从零复刻这套工具的 Codex skill：
-
-```text
-dq2_modkit/skills/
-```
-
-它包含 `SKILL.md`、复刻流程参考文档、干净模板和 scaffold 脚本。示例：
-
-```powershell
-& ".\dq2_modkit\skills\scripts\scaffold-dq2-modkit.ps1" `
-  -GameRoot "F:\SteamLibrary\steamapps\common\大千世界2 The Stupendous World Demo" `
-  -RunSetup
-```
-
-当前随项目保存的位置是 `dq2_modkit/skills`。如果要安装到 Codex 的全局 skill 目录用于自动发现，目录名建议保持为 `dq2-modkit-builder`。

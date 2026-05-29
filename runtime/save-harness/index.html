@@ -1,0 +1,558 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>大千世界2</title>
+<script>
+(async function () {
+  const fs = require("fs");
+  const path = require("path");
+  const harnessRoot = process.cwd();
+  const projectRoot = path.resolve(harnessRoot, "..", "..");
+  const gameRoot = path.resolve(projectRoot, "..");
+  const resultPath = path.join(harnessRoot, "probe-result.json");
+  const result = {
+    ok: false,
+    errors: [],
+    versions: {
+      nw: typeof nw !== "undefined" ? process.versions.nw : null,
+      chrome: process.versions.chrome,
+      node: process.versions.node
+    }
+  };
+
+  const anyCache = new Map();
+  function makeAny(name) {
+    if (anyCache.has(name)) return anyCache.get(name);
+    function Any() {}
+    const obj = new Proxy(Any, {
+      get(target, prop) {
+        if (prop === Symbol.toPrimitive) return () => 0;
+        if (prop === "toString") return () => "";
+        if (prop === "valueOf") return () => 0;
+        if (prop === "prototype") return target.prototype;
+        if (!(prop in target)) target[prop] = makeAny(String(prop));
+        return target[prop];
+      },
+      set(target, prop, value) {
+        target[prop] = value;
+        return true;
+      },
+      apply() {
+        return makeAny(name + "()");
+      },
+      construct() {
+        return makeAny("new " + name);
+      }
+    });
+    Any.prototype = new Proxy({}, {
+      get(target, prop) {
+        if (!(prop in target)) target[prop] = makeAny(String(prop));
+        return target[prop];
+      },
+      set(target, prop, value) {
+        target[prop] = value;
+        return true;
+      }
+    });
+    anyCache.set(name, obj);
+    return obj;
+  }
+
+  try {
+    globalThis.window = globalThis;
+    const zlib = require("zlib");
+    globalThis["dhnqvρHRJZSDvyHC"] = makeAny("dhnqvρHRJZSDvyHC");
+    globalThis["zboymδhGS4qeh5Zr"] = makeAny("zboymδhGS4qeh5Zr");
+    globalThis["gahpfβkSpiOh4wOr"] = makeAny("gahpfβkSpiOh4wOr");
+    try {
+      const missingPath = path.join(harnessRoot, "missing-globals.json");
+      const parsedMissing = fs.existsSync(missingPath) ? JSON.parse(fs.readFileSync(missingPath, "utf8")) : [];
+      const missing = Array.isArray(parsedMissing) ? parsedMissing : [parsedMissing];
+      result.predefinedMissing = missing;
+      for (const name of missing) {
+        if (typeof name === "string" && !(name in globalThis)) globalThis[name] = makeAny(name);
+      }
+    } catch (error) {
+      result.errors.push("missing-globals: " + String(error && error.stack || error));
+    }
+    globalThis.Imported = {};
+    globalThis.$plugins = globalThis.$plugins || [];
+    globalThis.$dataSystem = { gameTitle: "大千世界2", versionId: 1 };
+    globalThis.$gameSystem = {};
+    globalThis.$gameTemp = {};
+    globalThis.$gameParty = {};
+    globalThis.$gamePlayer = {};
+    globalThis.CryptoJS = require("crypto-js");
+    globalThis.pako = require("pako");
+    globalThis.base64js = require("base64-js");
+    globalThis.msgpack = require("@msgpack/msgpack");
+    globalThis.LZString = require("lz-string");
+
+    const scriptFiles = [
+      "rpg_core.js.jsc",
+      "rpg_managers.js.jsc",
+      "rpg_objects.js.jsc",
+      "rpg_scenes.js.jsc",
+      "rpg_sprites.js.jsc",
+      "rpg_windows.js.jsc",
+      "TK_Expand.js.jsc"
+    ];
+    result.evalAttempts = [];
+    result.evalProgress = [];
+    result.evalOk = false;
+    try {
+      for (const file of scriptFiles) {
+        const scriptPath = path.join(harnessRoot, file);
+        nw.Window.get().evalNWBin(null, Buffer.from(fs.readFileSync(scriptPath)));
+        result.evalProgress.push(file);
+      }
+      result.evalOk = true;
+      result.evalAttempts.push({ attempt: 0, ok: true });
+    } catch (error) {
+      const text = String(error && error.stack || error);
+      result.evalAttempts.push({ attempt: 0, ok: false, error: text.split("\n")[0] });
+      const match = text.match(/ReferenceError:\s+(.+?)\s+is not defined/);
+      if (match) {
+        result.missingGlobal = match[1];
+      }
+      result.errors.push(text);
+    }
+
+    const Storage = globalThis.StorageManager || {};
+    const TkStorage = globalThis.TK && globalThis.TK.$ && globalThis.TK.$.StorageMrg || {};
+    const TkData = globalThis.TK && globalThis.TK.$ && globalThis.TK.$.DataMrg || {};
+    const storageCandidates = [
+      ["StorageManager", Storage],
+      ["TK.$.StorageMrg", TkStorage]
+    ];
+    result.storageType = typeof globalThis.StorageManager;
+    result.storagePropertyNames = Object.getOwnPropertyNames(Storage).sort();
+    result.tkStorageType = typeof TkStorage;
+    result.tkStoragePropertyNames = Object.getOwnPropertyNames(TkStorage || {}).sort();
+    result.tkStorageMethodSources = {};
+    for (const method of ["save", "saveToLocalFile", "load", "loadFromLocalFile", "localFilePath", "localFileDirectoryPath", "isLocalMode"]) {
+      try {
+        if (TkStorage && typeof TkStorage[method] === "function") {
+          result.tkStorageMethodSources[method] = String(TkStorage[method]).slice(0, 3000);
+        }
+      } catch (error) {
+        result.tkStorageMethodSources[method] = String(error && error.stack || error);
+      }
+    }
+    result.tkDataType = typeof TkData;
+    result.tkDataPropertyNames = Object.getOwnPropertyNames(TkData || {}).sort().slice(0, 200);
+    result.dataManagerType = typeof globalThis.DataManager;
+    result.dataManagerPropertyNames = Object.getOwnPropertyNames(globalThis.DataManager || {}).sort().slice(0, 200);
+    result.tkType = typeof globalThis.TK;
+    result.tkKeys = globalThis.TK && typeof globalThis.TK === "object" ? Object.getOwnPropertyNames(globalThis.TK).sort().slice(0, 200) : [];
+    result.tkDollarKeys = globalThis.TK && globalThis.TK.$ ? Object.getOwnPropertyNames(globalThis.TK.$).sort().slice(0, 200) : [];
+    result.tkDollarTypes = {};
+    if (globalThis.TK && globalThis.TK.$) {
+      for (const key of result.tkDollarKeys) result.tkDollarTypes[key] = typeof globalThis.TK.$[key];
+    }
+    result.storageKeys = Object.keys(Storage).sort();
+    result.storageTypes = {};
+    for (const key of result.storageKeys) result.storageTypes[key] = typeof Storage[key];
+    result.interestingGlobals = Object.keys(globalThis)
+      .filter(key => /save|storage|globalid|readfile|writefile|decode|encode|pack|unpack/i.test(key))
+      .sort()
+      .slice(0, 300)
+      .map(key => ({ key, type: typeof globalThis[key], ownKeys: globalThis[key] && typeof globalThis[key] === "object" ? Object.keys(globalThis[key]).slice(0, 40) : [] }));
+
+    function pickFn(name) {
+      if (typeof globalThis[name] === "function") return globalThis[name];
+      for (const [, candidate] of storageCandidates) {
+        if (candidate && typeof candidate[name] === "function") return candidate[name];
+      }
+      return null;
+    }
+
+    function asBytes(value) {
+      if (!value) return new Uint8Array();
+      if (value instanceof Uint8Array) return value;
+      if (Array.isArray(value)) return Uint8Array.from(value);
+      if (value.buffer && typeof value.byteLength === "number") {
+        return new Uint8Array(value.buffer, value.byteOffset || 0, value.byteLength);
+      }
+      return Uint8Array.from(value);
+    }
+
+    function bytesInfo(value, limit = 64) {
+      const bytes = asBytes(value);
+      return {
+        type: Object.prototype.toString.call(value),
+        length: bytes.length,
+        headHex: Array.from(bytes.slice(0, limit)).map(x => x.toString(16).padStart(2, "0")).join(""),
+        headAscii: Buffer.from(bytes.slice(0, limit)).toString("latin1").replace(/[^\x20-\x7e]/g, ".")
+      };
+    }
+
+    function wordArrayHex(value) {
+      if (!value) return String(value);
+      if (value.sigBytes != null && Array.isArray(value.words)) return value.toString(CryptoJS.enc.Hex);
+      if (value.toString) return value.toString(CryptoJS.enc.Hex);
+      return String(value);
+    }
+
+    function installCryptoTrace() {
+      if (result.cryptoTraceInstalled) return;
+      result.cryptoTraceInstalled = true;
+      result.cryptoTrace = [];
+      const limit = 200;
+      function describeCryptoValue(value) {
+        if (value == null) return { type: String(value) };
+        const type = Object.prototype.toString.call(value);
+        const item = { type };
+        try {
+          if (value.sigBytes != null && Array.isArray(value.words)) {
+            item.sigBytes = value.sigBytes;
+            item.hexHead = value.toString(CryptoJS.enc.Hex).slice(0, 160);
+            item.utf8Head = (() => {
+              try { return value.toString(CryptoJS.enc.Utf8).slice(0, 160); } catch (_) { return null; }
+            })();
+          } else if (typeof value === "string") {
+            item.length = value.length;
+            item.head = value.slice(0, 160);
+          } else if (value instanceof Uint8Array || value.buffer && typeof value.byteLength === "number") {
+            const bytes = asBytes(value);
+            item.length = bytes.length;
+            item.hexHead = Buffer.from(bytes.slice(0, 80)).toString("hex");
+          } else if (typeof value === "object") {
+            item.keys = Object.keys(value).slice(0, 20);
+          } else {
+            item.value = String(value);
+          }
+        } catch (error) {
+          item.error = String(error && error.stack || error).split("\n")[0];
+        }
+        return item;
+      }
+      function pushTrace(name, args, ret) {
+        if (result.cryptoTrace.length >= limit) return;
+        result.cryptoTrace.push({
+          name,
+          args: Array.from(args).map(describeCryptoValue),
+          ret: describeCryptoValue(ret)
+        });
+      }
+      const originalSha256 = CryptoJS.SHA256;
+      CryptoJS.SHA256 = function () {
+        const ret = originalSha256.apply(this, arguments);
+        pushTrace("SHA256", arguments, ret);
+        return ret;
+      };
+      const originalHmacSha256 = CryptoJS.HmacSHA256;
+      CryptoJS.HmacSHA256 = function () {
+        const ret = originalHmacSha256.apply(this, arguments);
+        pushTrace("HmacSHA256", arguments, ret);
+        return ret;
+      };
+      const originalDecrypt = CryptoJS.AES.decrypt;
+      CryptoJS.AES.decrypt = function () {
+        const ret = originalDecrypt.apply(this, arguments);
+        pushTrace("AES.decrypt", arguments, ret);
+        return ret;
+      };
+      const originalEncrypt = CryptoJS.AES.encrypt;
+      CryptoJS.AES.encrypt = function () {
+        const ret = originalEncrypt.apply(this, arguments);
+        pushTrace("AES.encrypt", arguments, ret);
+        return ret;
+      };
+    }
+
+    const getSaveKeyCandidates = pickFn("_getSaveKeyCandidates");
+    const deriveSaveKeys = pickFn("_deriveSaveKeys");
+    const deriveSaveKeysLegacy = pickFn("_deriveSaveKeysLegacy");
+    const decodeSaveBytes = pickFn("_decodeSaveBytes");
+    const unpackSaveV2 = pickFn("_unpackSaveV2");
+    result.saveApi = {
+      getSaveKeyCandidates: !!getSaveKeyCandidates,
+      deriveSaveKeys: !!deriveSaveKeys,
+      deriveSaveKeysLegacy: !!deriveSaveKeysLegacy,
+      decodeSaveBytes: !!decodeSaveBytes,
+      unpackSaveV2: !!unpackSaveV2
+    };
+
+    async function settle(value) {
+      if (value && typeof value.then === "function") return await value;
+      return value;
+    }
+
+    function valueInfo(value, limit = 256) {
+      const type = Object.prototype.toString.call(value);
+      if (typeof value === "string") {
+        return {
+          type,
+          length: value.length,
+          head: value.slice(0, limit),
+          jsonType: (() => {
+            try {
+              const parsed = JSON.parse(value);
+              return Object.prototype.toString.call(parsed);
+            } catch (_) {
+              return null;
+            }
+          })()
+        };
+      }
+      if (value instanceof Uint8Array || Array.isArray(value) || value && value.buffer && typeof value.byteLength === "number") {
+        return bytesInfo(value, limit);
+      }
+      return {
+        type,
+        value: value && typeof value === "object" ? Object.keys(value).slice(0, 80) : value
+      };
+    }
+
+    async function repackSavesIfRequested() {
+      const requestPath = path.join(harnessRoot, "save-repack-request.json");
+      if (!fs.existsSync(requestPath)) return false;
+      const request = JSON.parse(fs.readFileSync(requestPath, "utf8"));
+      const inputDir = path.resolve(request.inputDir);
+      const outputDir = path.resolve(request.outputDir);
+      fs.mkdirSync(outputDir, { recursive: true });
+
+      result.repack = {
+        inputDir,
+        outputDir,
+        entries: []
+      };
+
+      function readJson(name) {
+        return JSON.parse(fs.readFileSync(path.join(inputDir, name), "utf8"));
+      }
+
+      function stableJson(value) {
+        return JSON.stringify(value, (key, val) => typeof val === "bigint" ? val.toString() : val);
+      }
+
+      if (request.includeConfig !== false && fs.existsSync(path.join(inputDir, "config.json"))) {
+        const entry = { name: "config.rpgsave", source: path.join(inputDir, "config.json") };
+        try {
+          const json = readJson("config.json");
+          const packed = Buffer.from(msgpack.encode(json));
+          const encoded = zlib.deflateSync(packed).toString("base64");
+          const outputPath = path.join(outputDir, "config.rpgsave");
+          fs.writeFileSync(outputPath, encoded, "utf8");
+          const roundTrip = msgpack.decode(zlib.inflateSync(Buffer.from(encoded, "base64")));
+          entry.output = outputPath;
+          entry.packedLength = packed.length;
+          entry.encodedLength = encoded.length;
+          entry.verified = stableJson(roundTrip) === stableJson(json);
+        } catch (error) {
+          entry.error = String(error && error.stack || error);
+        }
+        result.repack.entries.push(entry);
+      }
+
+      if (!TkStorage || typeof TkStorage.save !== "function") {
+        throw new Error("TK.$.StorageMrg.save is unavailable");
+      }
+
+      const ids = Array.isArray(request.ids) ? request.ids : [0, 1, 3];
+      const previousDirectoryPath = TkStorage.localFileDirectoryPath;
+      const previousLocalFilePath = TkStorage.localFilePath;
+      const previousIsLocalMode = TkStorage.isLocalMode;
+      const previousStorageDirectoryPath = Storage.localFileDirectoryPath;
+      const previousStorageLocalFilePath = Storage.localFilePath;
+      const previousStorageIsLocalMode = Storage.isLocalMode;
+      const repackDirectoryPath = function () { return outputDir + path.sep; };
+      const repackLocalFilePath = function (savefileId) {
+        const fileName = Number(savefileId) === 0 ? "global.rpgsave" : `file${savefileId}.rpgsave`;
+        return path.join(outputDir, fileName);
+      };
+      const repackIsLocalMode = function () { return true; };
+      TkStorage.localFileDirectoryPath = repackDirectoryPath;
+      TkStorage.localFilePath = repackLocalFilePath;
+      TkStorage.isLocalMode = repackIsLocalMode;
+      Storage.localFileDirectoryPath = repackDirectoryPath;
+      Storage.localFilePath = repackLocalFilePath;
+      Storage.isLocalMode = repackIsLocalMode;
+      try {
+        for (const id of ids) {
+          const baseName = id === 0 ? "global" : `file${id}`;
+          const sourcePath = path.join(inputDir, `${baseName}.json`);
+          if (!fs.existsSync(sourcePath)) continue;
+          const entry = { id, name: `${baseName}.rpgsave`, source: sourcePath };
+          try {
+            const json = readJson(`${baseName}.json`);
+            const packed = msgpack.encode(json);
+            if (typeof TkStorage.saveToLocalFile === "function") {
+              await settle(TkStorage.saveToLocalFile.call(TkStorage, id, packed));
+            } else {
+              await settle(TkStorage.save.call(TkStorage, id, packed));
+            }
+            const outputPath = TkStorage.localFilePath.call(TkStorage, id);
+            const loaded = await settle(TkStorage.load.call(TkStorage, id));
+            const roundTrip = msgpack.decode(asBytes(loaded));
+            entry.output = outputPath;
+            entry.packedLength = packed.length;
+            entry.outputLength = fs.existsSync(outputPath) ? fs.statSync(outputPath).size : null;
+            entry.verified = stableJson(roundTrip) === stableJson(json);
+          } catch (error) {
+            entry.error = String(error && error.stack || error);
+          }
+          result.repack.entries.push(entry);
+        }
+      } finally {
+        TkStorage.localFileDirectoryPath = previousDirectoryPath;
+        TkStorage.localFilePath = previousLocalFilePath;
+        TkStorage.isLocalMode = previousIsLocalMode;
+        Storage.localFileDirectoryPath = previousStorageDirectoryPath;
+        Storage.localFilePath = previousStorageLocalFilePath;
+        Storage.isLocalMode = previousStorageIsLocalMode;
+      }
+
+      return true;
+    }
+
+    const didRepack = await repackSavesIfRequested();
+    if (didRepack) {
+      result.ok = true;
+      return;
+    }
+
+    if (TkStorage && typeof TkStorage === "function") {
+      result.tkStorageCalls = [];
+      try {
+        const saveDir = path.join(gameRoot, "www", "save") + path.sep;
+        TkStorage.localFileDirectoryPath = function () { return saveDir; };
+        installCryptoTrace();
+        for (const id of [0, 1, 3, "global", "config"]) {
+          const callResult = { id };
+          for (const method of ["localFilePath", "loadFromLocalFile", "load"]) {
+            if (typeof TkStorage[method] !== "function") continue;
+            try {
+              const value = await settle(TkStorage[method].call(TkStorage, id));
+              callResult[method] = valueInfo(value);
+              if (method === "load" && (id === 0 || id === 1 || id === 3)) {
+                const bytes = asBytes(value);
+                if (bytes.length > 0) {
+                  const dumpDir = path.join(projectRoot, "output", "extract", "save");
+                  fs.mkdirSync(dumpDir, { recursive: true });
+                  const baseName = id === 0 ? "global" : `file${id}`;
+                  const msgpackPath = path.join(dumpDir, `${baseName}.msgpack`);
+                  fs.writeFileSync(msgpackPath, Buffer.from(bytes));
+                  callResult[method].dumpMsgpack = msgpackPath;
+                  try {
+                    const decoded = msgpack.decode(bytes);
+                    const jsonPath = path.join(dumpDir, `${baseName}.json`);
+                    fs.writeFileSync(jsonPath, JSON.stringify(decoded, (key, val) => typeof val === "bigint" ? val.toString() : val, 2), "utf8");
+                    callResult[method].dumpJson = jsonPath;
+                    callResult[method].decodedType = Object.prototype.toString.call(decoded);
+                    callResult[method].decodedKeys = decoded && typeof decoded === "object" ? Object.keys(decoded).slice(0, 80) : [];
+                  } catch (error) {
+                    callResult[method].decodeError = String(error && error.stack || error).split("\n")[0];
+                  }
+                }
+              }
+            } catch (error) {
+              callResult[method + "Error"] = String(error && error.stack || error).split("\n")[0];
+            }
+          }
+          result.tkStorageCalls.push(callResult);
+        }
+      } catch (error) {
+        result.errors.push("tkStorageCalls: " + String(error && error.stack || error));
+      }
+    }
+
+    if (getSaveKeyCandidates) {
+      result.candidateAttempts = [];
+      for (const [label, thisArg] of [["globalThis", globalThis], ...storageCandidates, ["null", null]]) {
+        try {
+          const candidates = getSaveKeyCandidates.call(thisArg);
+          result.candidateAttempts.push({
+            thisArg: label,
+            ok: true,
+            type: Object.prototype.toString.call(candidates),
+            value: candidates
+          });
+          if (!result.candidates && Array.isArray(candidates)) result.candidates = candidates;
+        } catch (error) {
+          result.candidateAttempts.push({
+            thisArg: label,
+            ok: false,
+            error: String(error && error.stack || error).split("\n")[0]
+          });
+        }
+      }
+    }
+
+    const fallbackInputs = [
+      "dq2|sv2|DaQiann",
+      "dq2|sv2|DaQiann|tk_expand",
+      "dq2|sv2|RPGMV",
+      "dq2|sv2|大千世界2",
+      "UIOj3hESQ5WqqS77",
+      "大千世界2"
+    ];
+    const inputs = Array.from(new Set([...(result.candidates || []), ...fallbackInputs].map(String)));
+    result.derived = [];
+    for (const input of inputs) {
+      for (const [name, fn] of [["_deriveSaveKeys", deriveSaveKeys], ["_deriveSaveKeysLegacy", deriveSaveKeysLegacy]]) {
+        if (!fn) continue;
+        for (const [label, thisArg] of [["globalThis", globalThis], ...storageCandidates]) {
+          try {
+            const keys = fn.call(thisArg, input);
+            result.derived.push({
+              fn: name,
+              thisArg: label,
+              input,
+              ok: true,
+              keysType: Object.prototype.toString.call(keys),
+              ownKeys: keys && typeof keys === "object" ? Object.keys(keys) : [],
+              encKey: wordArrayHex(keys && keys.encKey),
+              macKey: wordArrayHex(keys && keys.macKey),
+              raw: keys && typeof keys !== "object" ? String(keys) : undefined
+            });
+          } catch (error) {
+            result.derived.push({
+              fn: name,
+              thisArg: label,
+              input,
+              ok: false,
+              error: String(error && error.stack || error).split("\n")[0]
+            });
+          }
+        }
+      }
+    }
+
+    result.saveFiles = {};
+    for (const saveName of ["config.rpgsave", "global.rpgsave", "file1.rpgsave", "file3.rpgsave"]) {
+      const savePath = path.join(gameRoot, "www", "save", saveName);
+      if (!fs.existsSync(savePath)) continue;
+      const text = fs.readFileSync(savePath, "utf8");
+      const saveResult = { textLength: text.length };
+      try {
+        if (decodeSaveBytes) {
+          const decoded = decodeSaveBytes.call(globalThis, text);
+          saveResult.decoded = bytesInfo(decoded);
+          if (unpackSaveV2) {
+            for (const [label, thisArg] of [["globalThis", globalThis], ...storageCandidates]) {
+              try {
+                const unpacked = unpackSaveV2.call(thisArg, decoded);
+                saveResult["unpacked_" + label] = bytesInfo(unpacked, 128);
+              } catch (error) {
+                saveResult["unpackError_" + label] =
+                  String(error && error.stack || error).split("\n")[0];
+              }
+            }
+          }
+        }
+      } catch (error) {
+        saveResult.decodeError = String(error && error.stack || error).split("\n")[0];
+      }
+      result.saveFiles[saveName] = saveResult;
+    }
+
+    result.ok = true;
+  } catch (error) {
+    result.errors.push(String(error && error.stack || error));
+  } finally {
+    fs.writeFileSync(resultPath, JSON.stringify(result, null, 2));
+    setTimeout(() => nw.App.quit(), 100);
+  }
+}());
+</script>

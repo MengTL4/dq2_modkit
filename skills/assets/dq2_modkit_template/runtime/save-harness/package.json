@@ -1,0 +1,25 @@
+{
+  "name": "dq2-modkit-save-harness",
+  "main": "index.html",
+  "window": {
+    "show": false,
+    "width": 320,
+    "height": 200
+  },
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@msgpack/msgpack": "^3.1.2",
+    "base64-js": "^1.5.1",
+    "crypto-js": "^4.2.0",
+    "lz-string": "^1.5.0",
+    "pako": "^2.1.0"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "name": "Codex Local Trainer Bridge",
+  "version": "0.1.0",
+  "description": "Local single-player runtime bridge for the NW.js game.",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>", "file://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": ["page-bridge.js"],
+  "permissions": ["<all_urls>"]
+}
