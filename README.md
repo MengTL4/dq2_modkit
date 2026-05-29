@@ -1,6 +1,6 @@
 # DQ2 Modkit
 
-这是《大千世界2 The Stupendous World Demo》的本地工具项目目录，集中放置运行时修改器、离线存档工具、数据解密脚本、运行时 bridge 和文档。
+这是《大千世界2 The Stupendous World Demo》的本地工具项目目录，集中放置运行时修改器、离线存档树形编辑器、数据解密脚本、运行时 bridge 和文档。
 
 ## 快速入口
 
@@ -51,6 +51,7 @@ notepad .\config.local.json
 
 ```text
 tools/launch-gui.ps1          启动 GUI 修改器
+tools/launch-save-editor.ps1  启动离线存档树形编辑器
 tools/launch-runtime.ps1      只启动 bridge 版游戏
 tools/setup-runtime.ps1       从配置的游戏目录生成/刷新 NW 运行时链接
 tools/clean-runtime.ps1       清理生成的 NW 运行时链接和字节码
@@ -73,6 +74,7 @@ docs/技术实现文档.md
 
 ```text
 app/gui/                 GUI 修改器 NW 应用
+app/save-editor/         纯网页离线存档树形编辑器
 runtime/trainer/         bridge 版游戏启动器
 runtime/bridge/          注入游戏页面的 bridge 脚本
 runtime/bridge-state/    命令队列、状态、日志
@@ -89,7 +91,7 @@ skills/                  复刻本项目用的 Codex skill
 
 ## 运行时生成
 
-`app/gui`、`runtime/trainer`、`runtime/save-harness` 里的 NW 运行时文件不是项目源码，而是由脚本从配置的游戏根目录生成的硬链接/目录联接。游戏更新后执行：
+`app/gui`、`runtime/trainer`、`runtime/save-harness` 里的 NW 运行时文件不是项目源码，而是由脚本从配置的游戏根目录生成的硬链接/目录联接。`app/save-editor` 是纯网页工具，不需要 NW 运行时。游戏更新后执行：
 
 ```powershell
 .\tools\setup-runtime.ps1 -Force
@@ -122,6 +124,16 @@ $env:DQ2_NPM_REGISTRY = "https://registry.npmmirror.com"
 ```powershell
 .\tools\clean-runtime.ps1 -IncludeDependencies
 ```
+
+## 离线存档树形编辑器
+
+这个模块不启动游戏、不走 NW 运行时，只在浏览器里处理本地 `.rpgsave` 文件：
+
+```powershell
+.\tools\launch-save-editor.ps1
+```
+
+打开页面后选择 `config.rpgsave`、`global.rpgsave` 或 `fileN.rpgsave`，编辑 JSON 树，再导出新的 `.rpgsave`。如果文件名不是标准的 `file1.rpgsave` 这种格式，手动填槽位 ID；`global` 是 `0`。
 
 ## 复刻 Skill
 

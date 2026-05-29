@@ -28,6 +28,10 @@ app/gui/Dictionaries/
 app/gui/locales/
 app/gui/swiftshader/
 
+app/save-editor/node_modules/
+app/save-editor/dist/
+app/save-editor/*.tsbuildinfo
+
 runtime/trainer/*.dll
 runtime/trainer/*.exe
 runtime/trainer/*.pak
@@ -36,6 +40,7 @@ runtime/trainer/*.bin
 runtime/trainer/Dictionaries/
 runtime/trainer/locales/
 runtime/trainer/swiftshader/
+runtime/trainer/data/
 
 runtime/save-harness/*.dll
 runtime/save-harness/*.exe
@@ -51,6 +56,9 @@ runtime/save-harness/swiftshader/
 # Local logs
 *.log
 npm-debug.log*
+
+# Local Codex workspace cache
+.codex/
 
 # Per-user local configuration
 config.local.json

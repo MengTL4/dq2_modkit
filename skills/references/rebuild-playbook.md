@@ -132,6 +132,18 @@ dq2_modkit/
     index.html
     styles.css
     app.js
+  app/save-editor/
+    package.json
+    index.html
+    vite.config.ts
+    tsconfig.json
+    tsconfig.app.json
+    tsconfig.node.json
+    src/
+      App.tsx
+      codec.ts
+      main.tsx
+      styles.css
   runtime/
     trainer/
       package.json
@@ -152,6 +164,7 @@ dq2_modkit/
     setup-runtime.ps1
     clean-runtime.ps1
     launch-gui.ps1
+    launch-save-editor.ps1
     launch-runtime.ps1
     trainer-send.mjs
     extract-bytecode-bundles.mjs
@@ -250,6 +263,8 @@ runtime/trainer
 runtime/save-harness
 ```
 
+Do not include `app/save-editor` in these NW runtime targets. It is a Vite browser app and should not receive `Game.exe`, `nw.dll`, or junctions.
+
 Implement `clean-runtime.ps1` to delete only:
 
 - Generated hardlinks.
@@ -327,6 +342,15 @@ JSON -> MessagePack -> zlib deflate -> AES-256-CBC -> HMAC-SHA256 -> base64
 ```
 
 Always verify by decrypting the generated file and deep-comparing with the input JSON.
+
+Implement the offline save tree editor as a separate browser module:
+
+- Use Vite + React + `jsoneditor`.
+- Use `@msgpack/msgpack`, `pako`, and WebCrypto in `app/save-editor/src/codec.ts`.
+- Support `config.rpgsave` and v2 `global/fileN.rpgsave`.
+- Infer slot ID from `global.rpgsave` and `fileN.rpgsave`, while allowing manual override.
+- Use browser file input/download only; do not read the game directory directly and do not launch NW.
+- Provide `tools/launch-save-editor.ps1` to install editor dependencies and start a local Vite server.
 
 ## 9. Runtime Trainer Features
 
@@ -413,6 +437,7 @@ node --check .\runtime\bridge\page-bridge.js
 node --check .\app\gui\app.js
 node --check .\tools\modkit-config.mjs
 node --check .\tools\trainer-send.mjs
+Push-Location .\app\save-editor; npm.cmd run build; Pop-Location
 .\tools\extract-all.ps1
 .\tools\encrypt-saves.ps1
 ```
@@ -421,6 +446,7 @@ Expected:
 
 - Setup recreates hardlinks/junctions and extracted bytecode.
 - Clean dry-run lists only generated runtime artifacts.
+- Save editor builds as a standalone Vite app.
 - `extract-data-pak` exports RPG Maker JSON files.
 - `extract-usedata` exports JSON and MessagePack.
 - `extract-saves` exports save JSON.
