@@ -4,6 +4,35 @@
 
 ## 快速入口
 
+首次使用前先确认本机有命令行版 Node.js/npm：
+
+```powershell
+node --version
+npm.cmd --version
+```
+
+脚本最低要求 Node.js 18+；新装建议直接安装当前 LTS 版。任选一种：
+
+```powershell
+winget install -e --id OpenJS.NodeJS.LTS
+```
+
+也可以去 [Node.js 官网](https://nodejs.org/en/download/) 下载 Windows LTS 安装包。安装后重新打开 PowerShell，让 `node` 和 `npm.cmd` 进入 PATH。
+
+如果 Windows 提示“无法加载 .ps1，因为在此系统上禁止运行脚本”，任选一种处理：
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+或者不修改执行策略，单次绕过执行：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\dq2_modkit\tools\launch-gui.ps1"
+```
+
+正常启动：
+
 ```powershell
 cd "f:\SteamLibrary\steamapps\common\大千世界2 The Stupendous World Demo\dq2_modkit\tools"
 .\launch-gui.ps1

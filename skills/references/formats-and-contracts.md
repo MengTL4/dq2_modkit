@@ -398,6 +398,15 @@ When current > baseline, write baseline + (current - baseline) * skillRate.
 
 ## 9. Validation Commands
 
+Prerequisites:
+
+```powershell
+node --version
+npm.cmd --version
+```
+
+If PowerShell blocks scripts, prefix `.ps1` checks with `powershell -NoProfile -ExecutionPolicy Bypass -File`.
+
 Syntax:
 
 ```powershell

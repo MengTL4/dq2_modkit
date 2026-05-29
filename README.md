@@ -4,6 +4,35 @@
 
 ## 快速入口
 
+首次使用前先确认本机有命令行版 Node.js/npm：
+
+```powershell
+node --version
+npm.cmd --version
+```
+
+脚本最低要求 Node.js 18+；新装建议直接安装当前 LTS 版。任选一种：
+
+```powershell
+winget install -e --id OpenJS.NodeJS.LTS
+```
+
+也可以去 [Node.js 官网](https://nodejs.org/en/download/) 下载 Windows LTS 安装包。安装后重新打开 PowerShell，让 `node` 和 `npm.cmd` 进入 PATH。
+
+如果 Windows 提示“无法加载 .ps1，因为在此系统上禁止运行脚本”，任选一种处理：
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+或者不修改执行策略，单次绕过执行：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\dq2_modkit\tools\launch-gui.ps1"
+```
+
+正常启动：
+
 ```powershell
 cd "f:\SteamLibrary\steamapps\common\大千世界2 The Stupendous World Demo\dq2_modkit\tools"
 .\launch-gui.ps1
@@ -89,6 +118,12 @@ dq2_modkit/skills/
 & ".\dq2_modkit\skills\scripts\scaffold-dq2-modkit.ps1" `
   -GameRoot "F:\SteamLibrary\steamapps\common\大千世界2 The Stupendous World Demo" `
   -RunSetup
+```
+
+如果 `.ps1` 被执行策略拦截，使用：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\dq2_modkit\skills\scripts\scaffold-dq2-modkit.ps1" -GameRoot "." -RunSetup
 ```
 
 当前随项目保存的位置是 `dq2_modkit/skills`。如果要安装到 Codex 的全局 skill 目录用于自动发现，目录名建议保持为 `dq2-modkit-builder`。

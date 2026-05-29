@@ -34,6 +34,40 @@ Allowed project location:
 
 The runtime trainer only affects windows launched through the modkit launcher. It does not attach to arbitrary running processes.
 
+Required local tools:
+
+```text
+Windows PowerShell
+Node.js 18+ minimum; current LTS recommended
+npm
+Git only when publishing the project
+```
+
+Check:
+
+```powershell
+node --version
+npm.cmd --version
+```
+
+Install Node.js from the official Windows LTS installer or with:
+
+```powershell
+winget install -e --id OpenJS.NodeJS.LTS
+```
+
+If `.ps1` execution is blocked, either set:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+
+or run scripts with:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\dq2_modkit\tools\setup-runtime.ps1"
+```
+
 ## 2. Recon Checklist
 
 Confirm:

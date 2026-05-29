@@ -19,6 +19,12 @@ When the target is the same DQ2 demo, prefer the bundled clean template:
   -RunSetup
 ```
 
+If Windows blocks `.ps1` execution, run the same script through PowerShell's per-command bypass:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\dq2_modkit\skills\scripts\scaffold-dq2-modkit.ps1" -GameRoot "." -RunSetup
+```
+
 The template is in `assets/dq2_modkit_template`. It intentionally excludes generated runtime files, `node_modules`, extracted data, saves, and `.jsc` bytecode. `setup-runtime.ps1` regenerates those from the current game install.
 
 This project stores the skill inside `dq2_modkit/skills` so it travels with the modkit. If installing it into Codex's global skill directory for automatic discovery, place this same folder as `dq2-modkit-builder`.
@@ -31,14 +37,15 @@ When building from scratch or adapting to a changed game, read:
 ## Workflow
 
 1. Confirm the target is a local NW.js/RPG Maker MV game and identify protected files. For this project, never modify original `package.json`, `www/index.html`, or `www/guard.js`.
-2. Choose the runtime bridge strategy: create an independent NW launcher, open the original `www/index.html`, and inject `runtime/bridge/page-bridge.js` with `inject_js_start`.
-3. Scaffold `dq2_modkit` with `tools`, `app/gui`, `runtime/trainer`, `runtime/bridge`, `runtime/save-harness`, `runtime/bridge-state`, `output`, and `docs`.
-4. Implement runtime generation before features. `setup-runtime.ps1` must create hardlinks/junctions from the current game install; `clean-runtime.ps1` must safely remove only generated artifacts.
-5. Implement extractors next: `data.pak`, `useData`, and saves. Use structured parsers and cryptographic verification; do not rely on ad hoc text parsing.
-6. Implement the runtime bridge command loop over local JSONL files, then expose commands through `trainer-send.mjs`.
-7. Build the external GUI last. It should read exported data for searchable lists and communicate only through the bridge-state command queue.
-8. Validate each layer independently: setup/clean, JS syntax, data extraction, save round-trip encryption, bridge status, GUI smoke.
-9. Update usage and technical docs so the project remains reproducible after game updates.
+2. Confirm command-line Node.js/npm are installed. Use Node.js 18+ at minimum; install the current LTS for new setups. The game's `node.dll` is not enough for tool scripts. On Windows, prefer `npm.cmd` for checks if `npm.ps1` is blocked by execution policy.
+3. Choose the runtime bridge strategy: create an independent NW launcher, open the original `www/index.html`, and inject `runtime/bridge/page-bridge.js` with `inject_js_start`.
+4. Scaffold `dq2_modkit` with `tools`, `app/gui`, `runtime/trainer`, `runtime/bridge`, `runtime/save-harness`, `runtime/bridge-state`, `output`, and `docs`.
+5. Implement runtime generation before features. `setup-runtime.ps1` must create hardlinks/junctions from the current game install; `clean-runtime.ps1` must safely remove only generated artifacts.
+6. Implement extractors next: `data.pak`, `useData`, and saves. Use structured parsers and cryptographic verification; do not rely on ad hoc text parsing.
+7. Implement the runtime bridge command loop over local JSONL files, then expose commands through `trainer-send.mjs`.
+8. Build the external GUI last. It should read exported data for searchable lists and communicate only through the bridge-state command queue.
+9. Validate each layer independently: setup/clean, JS syntax, data extraction, save round-trip encryption, bridge status, GUI smoke.
+10. Update usage and technical docs so the project remains reproducible after game updates.
 
 ## Implementation Rules
 
