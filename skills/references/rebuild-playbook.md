@@ -409,7 +409,7 @@ GUI requirements:
 - Append commands to `commands.jsonl`.
 - Read `events.jsonl` for results.
 - Load extracted RPG Maker data from `output/extract/data`.
-- Show searchable and virtualized lists for items, weapons, armors, skills, actors, variables, switches, maps, common events.
+- Show searchable paged lists for items, weapons, armors, skills, actors, variables, switches, maps, common events. Default to 20 rows per page, with first/previous/next/last controls.
 - Search ID, name, description, note where available.
 - Include item mode `all`, merging item/weapon/armor while preserving `kind`.
 - Decode `www/img/system/IconSet.png` into per-entry icons when possible.

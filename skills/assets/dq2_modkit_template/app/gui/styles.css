@@ -15,6 +15,9 @@
   --ink-on-primary: #ffffff;
   --shadow: 0 14px 34px rgba(15, 23, 42, .08);
   --radius: 8px;
+  --chrome-gap: clamp(10px, 1.25vw, 16px);
+  --panel-pad: clamp(12px, 1.15vw, 14px);
+  --sidebar-width: clamp(270px, 23vw, 318px);
   --iconset-url: none;
   color-scheme: light;
 }
@@ -32,6 +35,10 @@ body {
   width: 100%;
   height: 100%;
   margin: 0;
+}
+
+html,
+body {
   overflow: hidden;
 }
 
@@ -49,6 +56,7 @@ input,
 select,
 textarea {
   font: inherit;
+  min-width: 0;
 }
 
 button {
@@ -57,8 +65,9 @@ button {
   border-radius: 7px;
   background: #ffffff;
   color: var(--text);
-  padding: 0 14px;
+  padding: 6px clamp(10px, 1vw, 14px);
   cursor: pointer;
+  line-height: 1.2;
   transition: background .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
 }
 
@@ -67,6 +76,21 @@ button:hover {
   color: var(--primary);
   background: #f7fbff;
   box-shadow: 0 6px 18px rgba(37, 99, 235, .10);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  border-color: var(--line);
+  background: #f1f5f9;
+  color: #94a3b8;
+  box-shadow: none;
+}
+
+button:disabled:hover {
+  border-color: var(--line);
+  background: #f1f5f9;
+  color: #94a3b8;
+  box-shadow: none;
 }
 
 button:active {
@@ -113,6 +137,14 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
 }
 
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, .65);
+  outline-offset: 2px;
+}
+
 textarea {
   min-height: 112px;
   resize: vertical;
@@ -126,15 +158,19 @@ textarea {
   display: grid;
   grid-template-rows: auto 1fr;
   height: 100%;
-  min-width: 980px;
+  min-width: 0;
 }
 
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 8;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 14px;
   min-height: 76px;
-  padding: 14px 20px;
+  padding: 14px clamp(12px, 1.8vw, 20px);
   border-bottom: 1px solid var(--line);
   background: rgba(255, 255, 255, .94);
   backdrop-filter: blur(10px);
@@ -158,6 +194,8 @@ h1 {
 .top-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -192,10 +230,10 @@ h1 {
 
 .layout {
   display: grid;
-  grid-template-columns: 318px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  gap: var(--chrome-gap);
   min-height: 0;
-  padding: 16px;
+  padding: var(--chrome-gap);
 }
 
 .sidebar,
@@ -211,7 +249,7 @@ h1 {
 
 .workspace {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) 170px;
+  grid-template-rows: auto auto minmax(0, 1fr) minmax(120px, 170px);
   gap: 12px;
   overflow: hidden;
 }
@@ -223,7 +261,7 @@ h1 {
   border-radius: var(--radius);
   background: rgba(255, 255, 255, .96);
   box-shadow: var(--shadow);
-  padding: 14px;
+  padding: var(--panel-pad);
 }
 
 .panel-title {
@@ -316,8 +354,11 @@ dd {
 }
 
 .tool-nav {
+  position: sticky;
+  top: 0;
+  z-index: 6;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
   gap: 6px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -339,14 +380,46 @@ dd {
   box-shadow: none;
 }
 
+.tool-section-nav {
+  position: sticky;
+  top: 61px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+  padding: 6px;
+}
+
+.tool-section-nav button {
+  min-height: 30px;
+  border-color: transparent;
+  background: #f8fafc;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.tool-section-nav button.active {
+  border-color: rgba(15, 118, 110, .26);
+  background: #ecfdf5;
+  color: var(--accent);
+}
+
 .tool-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(330px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
   grid-auto-rows: min-content;
   gap: 12px;
   min-height: 0;
   overflow: auto;
   padding-right: 2px;
+  scrollbar-gutter: stable;
 }
 
 .tool-panel {
@@ -357,12 +430,9 @@ dd {
   grid-column: 1 / -1;
 }
 
-.browser-panel {
-  min-height: 500px;
-}
-
+.browser-panel,
 .compact-browser {
-  min-height: 420px;
+  min-height: 0;
 }
 
 .metric {
@@ -376,7 +446,7 @@ dd {
   color: #0f3f8c;
   padding: 0 14px;
   font-family: "Cascadia Mono", Consolas, monospace;
-  font-size: 30px;
+  font-size: clamp(22px, 2.2vw, 30px);
   font-weight: 800;
 }
 
@@ -436,6 +506,36 @@ dd {
   grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
 }
 
+.row.fishing-power-row {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+}
+
+.row.fishing-options-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  margin-top: 10px;
+}
+
+.row.fishing-items-row {
+  grid-template-columns: 96px repeat(4, auto);
+}
+
+.row.fishing-resource-row {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  margin-top: 10px;
+}
+
+.row.fishing-catch-row {
+  grid-template-columns: minmax(220px, 1fr) 120px auto;
+}
+
+.row.offline-hunt-row {
+  grid-template-columns: minmax(220px, 1fr) 120px 110px auto auto;
+}
+
+.row.troop-mode-row {
+  grid-template-columns: minmax(260px, 1fr) 120px auto auto;
+}
+
 .row.browser-search-row {
   grid-template-columns: 1fr;
 }
@@ -480,6 +580,91 @@ label span {
   gap: 10px;
 }
 
+.offline-hunt-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+  margin-top: 10px;
+}
+
+.offline-loot-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.option-title {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.quality-toggle-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.check-line {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #f8fafc;
+  color: var(--text);
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.check-line input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
+
+.save-slot-line {
+  grid-template-columns: auto 92px;
+  align-items: center;
+  gap: 8px;
+}
+
+.offline-result {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.offline-result > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.offline-result strong {
+  margin-right: 2px;
+  color: var(--muted);
+}
+
+.result-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 0 10px;
+  color: var(--text);
+}
+
 .inline-status {
   display: inline-flex;
   align-items: center;
@@ -501,18 +686,63 @@ label span {
   overflow-wrap: anywhere;
 }
 
+.catalog-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.catalog-tools button {
+  min-height: 30px;
+  padding: 0 9px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.catalog-page-status {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #f8fafc;
+  color: var(--muted);
+  padding: 0 9px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .catalog-list {
   position: relative;
-  height: 620px;
+  height: clamp(220px, 36dvh, 420px);
   margin-top: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: #f8fafc;
   overflow: auto;
+  scrollbar-gutter: stable;
+  contain: layout paint style;
 }
 
 .compact-browser .catalog-list {
-  height: 250px;
+  height: clamp(180px, 28dvh, 260px);
+}
+
+.catalog-list.catalog-list-expanded {
+  height: clamp(340px, 58dvh, 680px);
+}
+
+.compact-browser .catalog-list.catalog-list-expanded {
+  height: clamp(260px, 48dvh, 480px);
+}
+
+.catalog-list.catalog-list-collapsed {
+  height: 0 !important;
+  margin-top: 0;
+  border-width: 0;
+  overflow: hidden;
 }
 
 .catalog-spacer {
@@ -534,6 +764,7 @@ label span {
   background: #ffffff;
   padding: 10px;
   cursor: pointer;
+  contain: layout paint;
   transition: background .16s ease, border-color .16s ease, box-shadow .16s ease;
 }
 
@@ -641,6 +872,11 @@ label span {
   color: #0369a1;
 }
 
+.catalog-badge.troop {
+  background: #fef3c7;
+  color: #92400e;
+}
+
 .catalog-badge.event {
   background: #fff7ed;
   color: var(--warning);
@@ -694,8 +930,9 @@ label span {
 .event-list {
   display: grid;
   gap: 8px;
-  max-height: 118px;
+  max-height: clamp(96px, 16dvh, 150px);
   overflow: auto;
+  scrollbar-gutter: stable;
 }
 
 .event {
@@ -758,7 +995,196 @@ label span {
 
   .row.map-row,
   .row.rates-row,
-  .row.vitals-row {
+  .row.vitals-row,
+  .row.fishing-power-row,
+  .row.fishing-options-row,
+  .row.fishing-items-row,
+  .row.fishing-resource-row,
+  .row.fishing-catch-row,
+  .row.offline-hunt-row,
+  .row.troop-mode-row,
+  .row.item-toolbar,
+  .row.item-row,
+  .row.actor-row,
+  .row.actor-browser-row,
+  .row.skill-row,
+  .row.skill-toolbar,
+  .row.param-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+body.page-scroll-mode {
+  overflow: auto;
+}
+
+body.page-scroll-mode .shell {
+  height: auto;
+  min-height: 100%;
+}
+
+body.page-scroll-mode .layout {
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+body.page-scroll-mode .sidebar {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  grid-template-rows: auto;
+  align-items: start;
+}
+
+body.page-scroll-mode .workspace {
+  grid-template-rows: auto auto auto auto;
+  overflow: visible;
+}
+
+body.page-scroll-mode .tool-nav {
+  top: calc(76px + var(--chrome-gap));
+}
+
+body.page-scroll-mode .tool-section-nav {
+  top: calc(125px + var(--chrome-gap));
+}
+
+body.page-scroll-mode .tool-grid {
+  overflow: visible;
+  padding-right: 0;
+}
+
+body.page-scroll-mode .event-panel {
+  overflow: visible;
+}
+
+body.page-scroll-mode .event-list {
+  max-height: 260px;
+}
+
+body.page-scroll-mode .save-files ul,
+body.page-scroll-mode .party-panel ul {
+  max-height: 220px;
+}
+
+@media (max-width: 980px), (max-height: 760px) {
+  body {
+    overflow: auto;
+  }
+
+  .shell {
+    height: auto;
+    min-height: 100%;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .sidebar {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    grid-template-rows: auto;
+    align-items: start;
+  }
+
+  .workspace {
+    grid-template-rows: auto auto auto auto;
+    overflow: visible;
+  }
+
+  .tool-grid {
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .event-panel {
+    overflow: visible;
+  }
+
+  .event-list {
+    max-height: 260px;
+  }
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .top-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+    width: 100%;
+  }
+
+  .tool-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tool-section-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .row,
+  .row.three,
+  .row.item-row,
+  .row.item-toolbar,
+  .row.compact-id-row,
+  .row.actor-row,
+  .row.actor-browser-row,
+  .row.skill-row,
+  .row.skill-toolbar,
+  .row.vitals-row,
+  .row.param-row,
+  .row.rates-row,
+  .row.fishing-power-row,
+  .row.fishing-options-row,
+  .row.fishing-items-row,
+  .row.fishing-resource-row,
+  .row.fishing-catch-row,
+  .row.offline-hunt-row,
+  .row.troop-mode-row,
+  .row.map-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .button-stack,
+  .battle-switches,
+  .unlock-grid,
+  .offline-loot-options {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-row {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .catalog-name {
+    display: -webkit-box;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .catalog-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+
+  .catalog-actions button {
+    flex: 1 1 96px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

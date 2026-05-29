@@ -59,12 +59,15 @@
         <nav class="tool-nav" aria-label="修改器功能分组">
           <button class="active" data-tool-tab="core">常用</button>
           <button data-tool-tab="catalog">物品角色</button>
+          <button data-tool-tab="fishing">钓鱼</button>
+          <button data-tool-tab="offline">脱机挂机</button>
           <button data-tool-tab="world">地图事件</button>
           <button data-tool-tab="misc">杂项</button>
           <button data-tool-tab="debug">调试</button>
         </nav>
+        <nav id="toolSectionNav" class="tool-section-nav" aria-label="当前分类"></nav>
         <section class="tool-grid">
-          <article class="panel tool-panel" data-tool-panel="core">
+          <article class="panel tool-panel" data-tool-panel="core" data-tool-section="gold" data-tool-label="金币">
             <div class="panel-title">金币</div>
             <div class="metric" id="goldMetric">0</div>
             <div class="row">
@@ -80,7 +83,7 @@
             </div>
           </article>
 
-          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="misc">
+          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="misc" data-tool-section="variable" data-tool-label="变量">
             <div class="panel-title">变量 <span id="variableListCount" class="panel-count"></span></div>
             <div class="row browser-search-row">
               <input id="variableSearch" type="search" placeholder="搜索变量名称或ID">
@@ -100,7 +103,7 @@
             <div id="variableList" class="catalog-list system-list"></div>
           </article>
 
-          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="misc">
+          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="misc" data-tool-section="switch" data-tool-label="开关">
             <div class="panel-title">开关 <span id="switchListCount" class="panel-count"></span></div>
             <div class="row browser-search-row">
               <input id="switchSearch" type="search" placeholder="搜索开关名称或ID">
@@ -120,7 +123,7 @@
             <div id="switchList" class="catalog-list system-list"></div>
           </article>
 
-          <article class="panel tool-panel browser-panel wide-panel" data-tool-panel="catalog">
+          <article class="panel tool-panel browser-panel wide-panel" data-tool-panel="catalog" data-tool-section="item" data-tool-label="物品">
             <div class="panel-title">物品 <span id="itemListCount" class="panel-count"></span></div>
             <div class="row item-toolbar">
               <select id="itemKind">
@@ -146,13 +149,12 @@
             <div id="itemList" class="catalog-list icon-list"></div>
           </article>
 
-          <article class="panel tool-panel browser-panel wide-panel" data-tool-panel="catalog">
+          <article class="panel tool-panel browser-panel wide-panel" data-tool-panel="catalog" data-tool-section="actor" data-tool-label="角色编辑">
             <div class="panel-title">角色编辑 <span id="actorListCount" class="panel-count"></span></div>
             <div class="row actor-browser-row">
               <input id="actorSearch" type="search" placeholder="搜索角色名称或ID">
               <button id="actorUnlockBtn">解锁人物</button>
             </div>
-            <div id="actorList" class="catalog-list actor-list"></div>
             <div class="row actor-row">
               <label>
                 <span>角色ID</span>
@@ -204,9 +206,10 @@
               <input id="paramValue" type="number" step="1" value="10">
               <button id="actorParamBtn">加值</button>
             </div>
+            <div id="actorList" class="catalog-list actor-list"></div>
           </article>
 
-          <article class="panel tool-panel browser-panel wide-panel" data-tool-panel="catalog">
+          <article class="panel tool-panel browser-panel wide-panel" data-tool-panel="catalog" data-tool-section="skill" data-tool-label="技能">
             <div class="panel-title">技能 <span id="skillListCount" class="panel-count"></span></div>
             <div class="row skill-toolbar">
               <label>
@@ -227,7 +230,207 @@
             <div id="skillList" class="catalog-list icon-list"></div>
           </article>
 
-          <article class="panel tool-panel wide-panel" data-tool-panel="misc">
+          <article class="panel tool-panel" data-tool-panel="fishing" data-tool-section="power" data-tool-label="钓力">
+            <div class="panel-title">钓力</div>
+            <div class="metric" id="fishingPowerMetric">0</div>
+            <div class="row fishing-power-row">
+              <label>
+                <span>基础钓力</span>
+                <input id="fishingPowerValue" type="number" min="0" step="1" value="0">
+              </label>
+              <button id="fishingPowerSetBtn">设定</button>
+              <label>
+                <span>增加</span>
+                <input id="fishingPowerAddValue" type="number" step="1" value="10">
+              </label>
+              <button id="fishingPowerAddBtn">增加</button>
+            </div>
+            <div class="row fishing-options-row">
+              <label>
+                <span>钓力倍率</span>
+                <input id="fishingPowerRate" type="number" min="0" step="0.1" value="1">
+              </label>
+              <label>
+                <span>额外钓力</span>
+                <input id="fishingPowerBonus" type="number" step="1" value="0">
+              </label>
+              <button id="fishingOptionsApplyBtn">应用</button>
+              <button id="fishingAutoSuccessBtn" class="toggle-btn">自动成功</button>
+            </div>
+            <div class="preset-row rate-presets">
+              <button data-fishing-rate="1">1x</button>
+              <button data-fishing-rate="5">5x</button>
+              <button data-fishing-rate="10">10x</button>
+              <button data-fishing-rate="20">20x</button>
+              <button data-fishing-rate="50">50x</button>
+              <button data-fishing-rate="100">100x</button>
+            </div>
+            <div id="fishingState" class="hint"></div>
+          </article>
+
+          <article class="panel tool-panel" data-tool-panel="fishing" data-tool-section="resource" data-tool-label="鱼具资源">
+            <div class="panel-title">鱼具和资源</div>
+            <div class="row fishing-items-row">
+              <label>
+                <span>数量</span>
+                <input id="fishingItemAmount" type="number" min="1" step="1" value="1">
+              </label>
+              <button id="fishingAddRodsBtn">鱼竿</button>
+              <button id="fishingAddBaitsBtn">鱼饵</button>
+              <button id="fishingAddKitBtn">鱼具套装</button>
+              <button id="fishingAddFishBtn">鱼类素材</button>
+            </div>
+            <div class="preset-row">
+              <button id="fishingUnlockQualBtn">解锁钓鱼资格</button>
+            </div>
+            <div class="row fishing-resource-row">
+              <label>
+                <span>协会奖章</span>
+                <input id="fishingMedals" type="number" min="0" step="1" value="0">
+              </label>
+              <button id="fishingMedalSetBtn">设定</button>
+              <label>
+                <span>增加奖章</span>
+                <input id="fishingMedalDelta" type="number" step="1" value="100">
+              </label>
+              <button id="fishingMedalAddBtn">增加</button>
+            </div>
+            <div class="row fishing-resource-row">
+              <label>
+                <span>钓鱼数量</span>
+                <input id="fishingCount" type="number" min="0" step="1" value="0">
+              </label>
+              <button id="fishingCountSetBtn">设定</button>
+              <label>
+                <span>增加数量</span>
+                <input id="fishingCountDelta" type="number" step="1" value="10">
+              </label>
+              <button id="fishingCountAddBtn">增加</button>
+            </div>
+            <div id="fishingVariables" class="hint"></div>
+          </article>
+
+          <article class="panel tool-panel wide-panel" data-tool-panel="fishing" data-tool-section="catch" data-tool-label="直接钓鱼">
+            <div class="panel-title">直接钓鱼</div>
+            <div class="row fishing-catch-row">
+              <label>
+                <span>鱼池</span>
+                <select id="fishingPointId">
+                  <option value="1">1 / 基础钓点</option>
+                  <option value="2">2 / 暮色林地</option>
+                  <option value="3">3 / 白砂海岸</option>
+                  <option value="4">4 / 雾隐河谷/雾隐湖</option>
+                  <option value="5">5 / 双溪瀑/寒风前段</option>
+                  <option value="6">6 / 寒风平原</option>
+                  <option value="7">7 / 听涛钓岛</option>
+                  <option value="8">8 / 雪吟钓岛</option>
+                  <option value="9">9 / 熔岩洞</option>
+                  <option value="10">10 / 闪光海滩</option>
+                  <option value="11">11 / 山巅通道</option>
+                  <option value="12">12 / 巨石环岛</option>
+                  <option value="13">13 / 血色钓岛</option>
+                </select>
+              </label>
+              <label>
+                <span>次数</span>
+                <input id="fishingTimes" type="number" min="1" max="100" step="1" value="1">
+              </label>
+              <button id="fishingCatchBtn">执行</button>
+            </div>
+            <div class="hint">直接调用游戏的 getFish(pointId)，适合测试鱼池掉落；需要保存时再使用存档面板保存。</div>
+          </article>
+
+          <article class="panel tool-panel wide-panel" data-tool-panel="offline" data-tool-section="map troop" data-tool-section-nav="false">
+            <div class="panel-title">脱机挂机</div>
+            <div class="metric" id="offlineHuntMetric">0</div>
+            <div class="row offline-hunt-row" data-offline-mode-panel="map">
+              <label>
+                <span>地图</span>
+                <input id="offlineHuntMapId" type="text" inputmode="numeric" list="offlineHuntMapOptions" value="31">
+              </label>
+              <label>
+                <span>次数</span>
+                <input id="offlineHuntMapTimes" type="number" min="1" max="5000" step="1" value="10">
+              </label>
+              <label>
+                <span>区域</span>
+                <input id="offlineHuntRegionId" type="number" min="0" step="1" placeholder="空">
+              </label>
+              <button id="offlineHuntPreviewBtn">预览</button>
+              <button id="offlineHuntRunBtn" class="primary">执行</button>
+            </div>
+            <div class="row offline-hunt-row troop-mode-row" data-offline-mode-panel="troop" hidden>
+              <label>
+                <span>敌群</span>
+                <input id="offlineHuntTroopId" type="text" inputmode="numeric" list="offlineHuntTroopOptions" placeholder="选择敌群">
+              </label>
+              <label>
+                <span>次数</span>
+                <input id="offlineHuntTroopTimes" type="number" min="1" max="5000" step="1" value="10">
+              </label>
+              <button id="offlineHuntPreviewTroopBtn">预览</button>
+              <button id="offlineHuntRunTroopBtn" class="primary">执行</button>
+            </div>
+            <div class="preset-row offline-hunt-presets">
+              <button data-offline-hunt-times="10">10次</button>
+              <button data-offline-hunt-times="50">50次</button>
+              <button data-offline-hunt-times="100">100次</button>
+              <button data-offline-hunt-times="500">500次</button>
+              <button data-offline-hunt-times="1000">1000次</button>
+              <button id="offlineHuntClearTroopBtn">按地图随机</button>
+            </div>
+            <div class="offline-hunt-options">
+              <label class="check-line"><input id="offlineHuntEnemyBook" type="checkbox" checked> 解锁图鉴</label>
+              <label class="check-line"><input id="offlineHuntRecover" type="checkbox" checked> 结束恢复</label>
+              <label class="check-line"><input id="offlineHuntSave" type="checkbox"> 保存</label>
+              <label class="save-slot-line">
+                <span>槽位</span>
+                <input id="offlineHuntSaveSlot" type="number" min="1" step="1" value="1">
+              </label>
+            </div>
+            <div class="offline-loot-options">
+              <div>
+                <span class="option-title">自动卖出装备</span>
+                <div class="quality-toggle-grid">
+                  <label class="check-line"><input id="offlineAutoSellGray" type="checkbox"> 灰</label>
+                  <label class="check-line"><input id="offlineAutoSellWhite" type="checkbox"> 白</label>
+                  <label class="check-line"><input id="offlineAutoSellGreen" type="checkbox"> 绿</label>
+                  <label class="check-line"><input id="offlineAutoSellBlue" type="checkbox"> 蓝</label>
+                  <label class="check-line"><input id="offlineAutoSellPurple" type="checkbox"> 紫</label>
+                </div>
+              </div>
+              <div>
+                <span class="option-title">屏蔽掉落装备</span>
+                <div class="quality-toggle-grid">
+                  <label class="check-line"><input id="offlineBlockWhite" type="checkbox"> 白</label>
+                  <label class="check-line"><input id="offlineBlockGreen" type="checkbox"> 绿</label>
+                  <label class="check-line"><input id="offlineBlockBlue" type="checkbox"> 蓝</label>
+                </div>
+              </div>
+            </div>
+            <div id="offlineHuntMapHint" class="hint"></div>
+            <div id="offlineHuntTroopHint" class="hint"></div>
+            <div id="offlineHuntState" class="hint"></div>
+            <div id="offlineHuntResult" class="offline-result"></div>
+          </article>
+
+          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="offline" data-tool-section="map" data-tool-label="地图挂机" data-offline-mode-panel="map">
+            <div class="panel-title">挂机地图 <span id="offlineHuntMapListCount" class="panel-count"></span></div>
+            <div class="row browser-search-row">
+              <input id="offlineHuntMapSearch" type="search" placeholder="搜索地图、敌群或区域">
+            </div>
+            <div id="offlineHuntMapList" class="catalog-list system-list"></div>
+          </article>
+
+          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="offline" data-tool-section="troop" data-tool-label="敌群挂机" data-offline-mode-panel="troop" hidden>
+            <div class="panel-title">敌群挂机 <span id="offlineHuntTroopListCount" class="panel-count"></span></div>
+            <div class="row browser-search-row">
+              <input id="offlineHuntTroopSearch" type="search" placeholder="搜索敌群、怪物、精英、首领、领主、掉落">
+            </div>
+            <div id="offlineHuntTroopList" class="catalog-list system-list"></div>
+          </article>
+
+          <article class="panel tool-panel wide-panel" data-tool-panel="misc" data-tool-section="enemyBook" data-tool-label="敌人图鉴">
             <div class="panel-title">敌人图鉴</div>
             <div class="unlock-grid">
               <button id="unlockEnemyBookBtn">解锁敌人图鉴</button>
@@ -235,7 +438,7 @@
             <div class="hint">写入配置数据后会调用游戏的配置保存；需要回到图鉴菜单重新打开查看。</div>
           </article>
 
-          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="world">
+          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="world" data-tool-section="map" data-tool-label="地图传送">
             <div class="panel-title">地图传送 <span id="mapListCount" class="panel-count"></span></div>
             <div class="row browser-search-row">
               <input id="mapSearch" type="search" placeholder="搜索地图名称或ID">
@@ -281,7 +484,7 @@
             <div id="mapList" class="catalog-list system-list"></div>
           </article>
 
-          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="world">
+          <article class="panel tool-panel browser-panel wide-panel compact-browser" data-tool-panel="world" data-tool-section="commonEvent" data-tool-label="公共事件">
             <div class="panel-title">公共事件 <span id="commonEventListCount" class="panel-count"></span></div>
             <div class="row browser-search-row">
               <input id="commonEventSearch" type="search" placeholder="搜索公共事件名称或ID">
@@ -297,7 +500,7 @@
             <div id="commonEventList" class="catalog-list system-list"></div>
           </article>
 
-          <article class="panel tool-panel" data-tool-panel="core">
+          <article class="panel tool-panel" data-tool-panel="core" data-tool-section="rate" data-tool-label="倍率">
             <div class="panel-title">倍率</div>
             <div class="row rates-row">
               <label>
@@ -328,16 +531,20 @@
             </div>
           </article>
 
-          <article class="panel tool-panel" data-tool-panel="core">
+          <article class="panel tool-panel" data-tool-panel="core" data-tool-section="battle" data-tool-label="战斗">
             <div class="panel-title">战斗</div>
             <div class="battle-switches">
               <button id="noCostBtn" class="toggle-btn">技能无耗</button>
+              <button id="oneHitKillBtn" class="toggle-btn">一击秒杀</button>
+              <button id="invincibleBtn" class="toggle-btn">无敌</button>
+              <button id="battleKillBtn">秒杀敌人</button>
+              <button id="battleEscapeBtn">逃跑</button>
               <button id="partyRecoverBtn">队伍恢复</button>
             </div>
             <div id="battleState" class="hint"></div>
           </article>
 
-          <article class="panel tool-panel" data-tool-panel="core">
+          <article class="panel tool-panel" data-tool-panel="core" data-tool-section="save" data-tool-label="存档">
             <div class="panel-title">存档</div>
             <div class="row">
               <label>
@@ -349,7 +556,7 @@
             </div>
           </article>
 
-          <article class="panel tool-panel" data-tool-panel="debug">
+          <article class="panel tool-panel" data-tool-panel="debug" data-tool-section="command" data-tool-label="自定义命令">
             <div class="panel-title">自定义命令</div>
             <textarea id="customCommand" spellcheck="false">{ "type": "ping" }</textarea>
             <div class="row">
@@ -375,6 +582,8 @@
   <datalist id="variableOptions"></datalist>
   <datalist id="switchOptions"></datalist>
   <datalist id="mapOptions"></datalist>
+  <datalist id="offlineHuntMapOptions"></datalist>
+  <datalist id="offlineHuntTroopOptions"></datalist>
   <datalist id="commonEventOptions"></datalist>
 
   <div id="toast" class="toast"></div>

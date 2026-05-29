@@ -59,7 +59,7 @@ When building from scratch or adapting to a changed game, read:
 - Prefer calling game runtime functions over writing object internals when possible: `$gameParty.gainItem`, `$gameActors.actor(id).learnSkill`, `DataManager.saveGame`, `$gameVariables.setValue`.
 - Resolve both standard RPG Maker globals and TK aliases. Many failures come from patching only `$gameParty`/`BattleManager` while the game uses `TK.$.*` aliases.
 - Make every command return structured success/failure events with enough error text for GUI and CLI debugging.
-- Use virtualized lists in the GUI for items, skills, variables, switches, maps, and events.
+- Use searchable paged lists in the GUI for items, skills, variables, switches, maps, and events; default to 20 rows per page and provide previous/next navigation.
 - Keep GUI and save-editor visuals in a light, dense tool layout unless the user explicitly requests a dark theme.
 - Keep the save editor raw and file-oriented: JSON tree editing plus decrypt/encrypt only, no trainer shortcuts.
 - Add a validation step after every major layer. Do not stop after writing files.
