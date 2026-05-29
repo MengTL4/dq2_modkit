@@ -47,7 +47,6 @@ function Install-NodeDependencies {
   } elseif ($env:DQ2_NPM_REGISTRY) {
     $registries.Add($env:DQ2_NPM_REGISTRY)
   } else {
-    $registries.Add("https://mirrors.tuna.tsinghua.edu.cn/npm/")
     $registries.Add("https://registry.npmmirror.com")
   }
 

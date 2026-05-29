@@ -27,7 +27,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".\dq2_modkit\skills\scripts
 
 The template is in `assets/dq2_modkit_template`. It intentionally excludes generated runtime files, `node_modules`, extracted data, saves, and `.jsc` bytecode. `setup-runtime.ps1` regenerates those from the current game install.
 
-The generated project supports per-user game-root configuration. If `dq2_modkit` is not directly under the game root, copy `config.example.json` to `config.local.json` and set `gameRoot`, or pass `-GameRoot` to PowerShell launch/setup/extract scripts. `config.local.json` must stay ignored and uncommitted.
+The recommended layout is `<game-root>/dq2_modkit`; in that case no game-root config is needed. If `dq2_modkit` is not directly under the game root, copy `config.example.json` to `config.local.json` and set `gameRoot`, or pass `-GameRoot` to PowerShell launch/setup/extract scripts. `config.local.json` must stay ignored and uncommitted.
 
 This project stores the skill inside `dq2_modkit/skills` so it travels with the modkit. If installing it into Codex's global skill directory for automatic discovery, place this same folder as `dq2-modkit-builder`.
 
@@ -43,7 +43,7 @@ When building from scratch or adapting to a changed game, read:
 3. Choose the runtime bridge strategy: create an independent NW launcher, open the original `www/index.html`, and inject `runtime/bridge/page-bridge.js` with `inject_js_start`.
 4. Scaffold `dq2_modkit` with `tools`, `app/gui`, `runtime/trainer`, `runtime/bridge`, `runtime/save-harness`, `runtime/bridge-state`, `output`, `docs`, and `config.example.json`.
 5. Implement shared game-root resolution before runtime generation. Resolve `-GameRoot`, `DQ2_GAME_ROOT`, `config.local.json`, then the legacy parent-directory layout.
-6. Implement runtime generation before features. `setup-runtime.ps1` must create hardlinks/junctions from the resolved game install and fall back to copying runtime files if hardlinks fail; npm dependency installation must use an explicit mirror registry, defaulting to the Tsinghua npm URL with `npmmirror` fallback and supporting `-NpmRegistry`/`DQ2_NPM_REGISTRY`.
+6. Implement runtime generation before features. `setup-runtime.ps1` must create hardlinks/junctions from the resolved game install and fall back to copying runtime files if hardlinks fail; npm dependency installation must use an explicit mirror registry, defaulting to `https://registry.npmmirror.com` and supporting `-NpmRegistry`/`DQ2_NPM_REGISTRY`.
 7. Implement `clean-runtime.ps1` so it safely removes only generated artifacts.
 8. Implement extractors next: `data.pak`, `useData`, and saves. Use structured parsers and cryptographic verification; do not rely on ad hoc text parsing.
 9. Implement the runtime bridge command loop over local JSONL files, then expose commands through `trainer-send.mjs`.

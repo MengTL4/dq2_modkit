@@ -17,7 +17,7 @@ npm.cmd --version
 winget install -e --id OpenJS.NodeJS.LTS
 ```
 
-也可以去 [Node.js 官网](https://nodejs.org/en/download/) 下载 Windows LTS 安装包。安装后重新打开 PowerShell，让 `node` 和 `npm.cmd` 进入 PATH。
+也可以去 [Node.js 官网](https://nodejs.org/zh-cn/download) 下载 Windows LTS 安装包。安装后重新打开 PowerShell，让 `node` 和 `npm.cmd` 进入 PATH。
 
 如果 Windows 提示“无法加载 .ps1，因为在此系统上禁止运行脚本”，任选一种处理：
 
@@ -31,19 +31,21 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 powershell -NoProfile -ExecutionPolicy Bypass -File ".\tools\launch-gui.ps1"
 ```
 
-先进入项目目录。如果 `dq2_modkit` 不在游戏根目录下，先复制本地配置并把 `gameRoot` 改成自己的游戏根目录：
+先进入项目目录。最推荐把 `dq2_modkit` 放在游戏根目录下，也就是和 `Game.exe`、`www` 同级；这种布局不需要配置游戏路径，直接启动即可：
 
 ```powershell
 cd "<你的 dq2_modkit 目录>"
+.\tools\launch-gui.ps1
+```
+
+只有当 `dq2_modkit` 不在游戏根目录下时，才需要复制本地配置并把 `gameRoot` 改成自己的游戏根目录：
+
+```powershell
 Copy-Item .\config.example.json .\config.local.json
 notepad .\config.local.json
 ```
 
-`gameRoot` 指向包含 `Game.exe` 和 `www\index.html` 的目录。`config.local.json` 已被 Git 忽略，每个用户可以写自己的路径。正常启动：
-
-```powershell
-.\tools\launch-gui.ps1
-```
+`gameRoot` 指向包含 `Game.exe` 和 `www\index.html` 的目录。`config.local.json` 已被 Git 忽略，每个用户可以写自己的路径。
 
 常用脚本：
 
@@ -97,7 +99,7 @@ skills/                  复刻本项目用的 Codex skill
 
 `setup-runtime.ps1` 还会安装工具脚本依赖，并从当前 `www/js/*.jsc.pak` 重新提取存档解密 harness 需要的字节码。也就是说游戏更新后刷新脚本即可，不需要手动把运行时文件搬进项目。
 
-依赖安装默认会先走清华 npm 镜像地址，失败后自动退到 `https://registry.npmmirror.com`。如需指定其它 npm registry：
+依赖安装默认使用 `https://registry.npmmirror.com`。如需指定其它 npm registry：
 
 ```powershell
 .\tools\setup-runtime.ps1 -NpmRegistry "https://registry.npmmirror.com"

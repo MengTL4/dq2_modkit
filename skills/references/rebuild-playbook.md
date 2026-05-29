@@ -234,14 +234,13 @@ When installing npm dependencies, do not mutate global npm config. Call npm with
 npm.cmd install --omit=dev --registry <registry>
 ```
 
-Default registry order:
+Default registry:
 
 ```text
-https://mirrors.tuna.tsinghua.edu.cn/npm/
 https://registry.npmmirror.com
 ```
 
-Expose `-NpmRegistry` and `DQ2_NPM_REGISTRY` for users who need another mirror or internal registry. If the user explicitly sets a registry, fail fast on that registry instead of silently trying another source.
+Expose `-NpmRegistry` and `DQ2_NPM_REGISTRY` for users who need another mirror or internal registry. If the selected registry fails, report the registry in the error so proxy or internal registry problems are easy to diagnose.
 
 Targets:
 
