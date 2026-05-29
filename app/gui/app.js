@@ -4,7 +4,7 @@
   const childProcess = require("child_process");
 
   const projectRoot = path.resolve(process.cwd(), "..", "..");
-  const rootDir = path.resolve(projectRoot, "..");
+  const rootDir = resolveGameRoot(projectRoot);
   const trainerRuntimeDir = path.join(projectRoot, "runtime", "trainer");
   const trainerGameExe = path.join(trainerRuntimeDir, "Game.exe");
   const bridgeDir = path.join(projectRoot, "runtime", "bridge-state");
@@ -78,6 +78,39 @@
     commonEvent: loadCommonEventCatalog()
   };
   catalogs.all = buildAllItemCatalog();
+
+  process.env.DQ2_MODKIT_ROOT = projectRoot;
+  process.env.DQ2_GAME_ROOT = rootDir;
+
+  function resolveGameRoot(projectRoot) {
+    const candidates = [];
+    if (process.env.DQ2_GAME_ROOT) candidates.push(process.env.DQ2_GAME_ROOT);
+    try {
+      const configPath = path.join(projectRoot, "config.local.json");
+      if (fs.existsSync(configPath)) {
+        const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+        if (config && config.gameRoot) candidates.push(String(config.gameRoot));
+      }
+    } catch (error) {
+      throw new Error("Invalid config.local.json: " + (error && error.message || error));
+    }
+    candidates.push(path.resolve(projectRoot, ".."));
+
+    for (const candidate of candidates) {
+      const fullPath = path.resolve(projectRoot, expandEnv(candidate));
+      if (fs.existsSync(path.join(fullPath, "www", "index.html"))) {
+        return fs.realpathSync(fullPath);
+      }
+    }
+    throw new Error("Game root not found. Set DQ2_GAME_ROOT or create config.local.json.");
+  }
+
+  function expandEnv(value) {
+    return String(value).replace(/%([^%]+)%|\$\{([^}]+)\}/g, (match, winName, posixName) => {
+      const name = winName || posixName;
+      return process.env[name] || match;
+    });
+  }
 
   function ensureBridgeDir() {
     fs.mkdirSync(bridgeDir, { recursive: true });
@@ -730,6 +763,11 @@
     try {
       gameProcess = childProcess.spawn(trainerGameExe, {
         cwd: trainerRuntimeDir,
+        env: {
+          ...process.env,
+          DQ2_MODKIT_ROOT: projectRoot,
+          DQ2_GAME_ROOT: rootDir
+        },
         detached: true,
         stdio: "ignore"
       });

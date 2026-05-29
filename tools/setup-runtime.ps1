@@ -1,11 +1,14 @@
 param(
-  [switch]$Force
+  [switch]$Force,
+  [string]$GameRoot
 )
 
 $ErrorActionPreference = "Stop"
 
-$ProjectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
-$GameRoot = Resolve-Path (Join-Path $ProjectRoot "..")
+$ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+. (Join-Path $PSScriptRoot "modkit-config.ps1")
+$GameRoot = Resolve-Dq2GameRoot -ProjectRoot $ProjectRoot -GameRoot $GameRoot
+Set-Dq2RuntimeEnvironment -ProjectRoot $ProjectRoot -GameRoot $GameRoot
 
 $RuntimeFiles = @(
   "d3dcompiler_47.dll",
@@ -76,7 +79,11 @@ foreach ($targetRel in $Targets) {
       Remove-GeneratedPath -Path $dest
     }
     if (-not (Test-Path -LiteralPath $dest)) {
-      New-Item -ItemType HardLink -Path $dest -Target $source | Out-Null
+      try {
+        New-Item -ItemType HardLink -Path $dest -Target $source -ErrorAction Stop | Out-Null
+      } catch {
+        Copy-Item -LiteralPath $source -Destination $dest -Force
+      }
     }
   }
 

@@ -32,6 +32,8 @@ Allowed project location:
 <game-root>/dq2_modkit
 ```
 
+Also support portable placement outside the game directory. In that case the user must set the game root through `-GameRoot`, `DQ2_GAME_ROOT`, or `config.local.json`.
+
 The runtime trainer only affects windows launched through the modkit launcher. It does not attach to arbitrary running processes.
 
 Required local tools:
@@ -65,7 +67,7 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 or run scripts with:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File ".\dq2_modkit\tools\setup-runtime.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\tools\setup-runtime.ps1"
 ```
 
 ## 2. Recon Checklist
@@ -122,6 +124,9 @@ Create:
 ```text
 dq2_modkit/
   README.md
+  .gitignore
+  .gitattributes
+  config.example.json
   app/gui/
     package.json
     index.html
@@ -142,6 +147,8 @@ dq2_modkit/
       missing-globals.json
   tools/
     package.json
+    modkit-config.ps1
+    modkit-config.mjs
     setup-runtime.ps1
     clean-runtime.ps1
     launch-gui.ps1
@@ -165,6 +172,22 @@ dq2_modkit/
 
 ## 5. Runtime Launcher and Bridge
 
+Implement game-root resolution before writing launchers. Every script that reads original game files should use this order:
+
+1. Explicit PowerShell parameter such as `-GameRoot`.
+2. Environment variable `DQ2_GAME_ROOT`.
+3. `config.local.json` beside `README.md`:
+
+```json
+{
+  "gameRoot": "D:\\SteamLibrary\\steamapps\\common\\大千世界2 The Stupendous World Demo"
+}
+```
+
+4. Legacy fallback: the parent directory of `dq2_modkit`.
+
+Validate candidates by checking for `www/index.html`. Resolve explicit `-GameRoot` relative to the caller's current PowerShell location; resolve config/env relative paths relative to the project root. Commit `config.example.json`, ignore `config.local.json`, and set `DQ2_MODKIT_ROOT` plus `DQ2_GAME_ROOT` before spawning NW child processes.
+
 `runtime/trainer/package.json` must enable Node and remote access for the opened file URL:
 
 ```json
@@ -180,7 +203,7 @@ dq2_modkit/
 `runtime/trainer/index.html` should:
 
 1. Resolve `projectRoot` as `dq2_modkit`.
-2. Resolve `gameRoot` as the parent directory.
+2. Resolve `gameRoot` through the shared config order above.
 3. Set `process.env.DQ2_MODKIT_ROOT` and `process.env.DQ2_GAME_ROOT`.
 4. `process.chdir(gameRoot)`.
 5. Open `file:///<gameRoot>/www/index.html` with `inject_js_start` pointing to `runtime/bridge/page-bridge.js`.
@@ -200,6 +223,7 @@ The bridge should:
 Do not commit or manually maintain NW runtime files. Implement `setup-runtime.ps1` to generate:
 
 - Hardlinks for `Game.exe`, `nw.dll`, `node.dll`, `ffmpeg.dll`, `resources.pak`, and other NW runtime files.
+- A normal file copy fallback when hardlinks fail, for example when the project and game live on different drives.
 - Junctions for `Dictionaries`, `locales`, and `swiftshader`.
 - Extracted save harness bytecode from current `www/js/*.jsc.pak`.
 - Missing `node_modules` under `tools` and `runtime/save-harness`.
@@ -368,14 +392,15 @@ Write two docs:
 Minimum validation:
 
 ```powershell
-cd "<game-root>"
-.\dq2_modkit\tools\setup-runtime.ps1 -Force
-.\dq2_modkit\tools\clean-runtime.ps1 -DryRun
-node --check .\dq2_modkit\runtime\bridge\page-bridge.js
-node --check .\dq2_modkit\app\gui\app.js
-node --check .\dq2_modkit\tools\trainer-send.mjs
-.\dq2_modkit\tools\extract-all.ps1
-.\dq2_modkit\tools\encrypt-saves.ps1
+cd "<dq2_modkit>"
+.\tools\setup-runtime.ps1 -Force
+.\tools\clean-runtime.ps1 -DryRun
+node --check .\runtime\bridge\page-bridge.js
+node --check .\app\gui\app.js
+node --check .\tools\modkit-config.mjs
+node --check .\tools\trainer-send.mjs
+.\tools\extract-all.ps1
+.\tools\encrypt-saves.ps1
 ```
 
 Expected:

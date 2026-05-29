@@ -25,17 +25,24 @@ winget install -e --id OpenJS.NodeJS.LTS
 Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 ```
 
-或者不修改执行策略，单次绕过执行：
+或者进入项目目录后，不修改执行策略，单次绕过执行：
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File ".\dq2_modkit\tools\launch-gui.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\tools\launch-gui.ps1"
 ```
 
-正常启动：
+先进入项目目录。如果 `dq2_modkit` 不在游戏根目录下，先复制本地配置并把 `gameRoot` 改成自己的游戏根目录：
 
 ```powershell
-cd "f:\SteamLibrary\steamapps\common\大千世界2 The Stupendous World Demo\dq2_modkit\tools"
-.\launch-gui.ps1
+cd "<你的 dq2_modkit 目录>"
+Copy-Item .\config.example.json .\config.local.json
+notepad .\config.local.json
+```
+
+`gameRoot` 指向包含 `Game.exe` 和 `www\index.html` 的目录。`config.local.json` 已被 Git 忽略，每个用户可以写自己的路径。正常启动：
+
+```powershell
+.\tools\launch-gui.ps1
 ```
 
 常用脚本：
@@ -43,7 +50,7 @@ cd "f:\SteamLibrary\steamapps\common\大千世界2 The Stupendous World Demo\dq2
 ```text
 tools/launch-gui.ps1          启动 GUI 修改器
 tools/launch-runtime.ps1      只启动 bridge 版游戏
-tools/setup-runtime.ps1       从当前游戏目录生成/刷新 NW 运行时链接
+tools/setup-runtime.ps1       从配置的游戏目录生成/刷新 NW 运行时链接
 tools/clean-runtime.ps1       清理生成的 NW 运行时链接和字节码
 tools/trainer-send.mjs        CLI 发送修改器命令
 tools/extract-all.ps1         导出 data.pak、useData、存档
@@ -76,15 +83,14 @@ docs/                    使用和技术文档
 skills/                  复刻本项目用的 Codex skill
 ```
 
-这个目录应保留在游戏根目录下。工具通过 `dq2_modkit` 的父目录定位原游戏文件。
+推荐把这个目录放在游戏根目录下，此时工具会自动用 `dq2_modkit` 的父目录作为游戏目录。也可以放在任意位置，只要通过 `-GameRoot`、环境变量 `DQ2_GAME_ROOT` 或 `config.local.json` 指定游戏根目录即可。
 
 ## 运行时生成
 
-`app/gui`、`runtime/trainer`、`runtime/save-harness` 里的 NW 运行时文件不是项目源码，而是由脚本从当前游戏根目录生成的硬链接/目录联接。游戏更新后执行：
+`app/gui`、`runtime/trainer`、`runtime/save-harness` 里的 NW 运行时文件不是项目源码，而是由脚本从配置的游戏根目录生成的硬链接/目录联接。游戏更新后执行：
 
 ```powershell
-cd "dq2_modkit\tools"
-.\setup-runtime.ps1 -Force
+.\tools\setup-runtime.ps1 -Force
 ```
 
 启动 GUI、启动 bridge、解密存档时，如果运行时文件缺失，也会自动调用 setup。
@@ -94,14 +100,13 @@ cd "dq2_modkit\tools"
 需要清空这些生成产物时执行：
 
 ```powershell
-cd "dq2_modkit\tools"
-.\clean-runtime.ps1
+.\tools\clean-runtime.ps1
 ```
 
 默认不会删除 `node_modules`。如果需要连工具依赖也一起清理：
 
 ```powershell
-.\clean-runtime.ps1 -IncludeDependencies
+.\tools\clean-runtime.ps1 -IncludeDependencies
 ```
 
 ## 复刻 Skill
@@ -116,7 +121,7 @@ dq2_modkit/skills/
 
 ```powershell
 & ".\dq2_modkit\skills\scripts\scaffold-dq2-modkit.ps1" `
-  -GameRoot "F:\SteamLibrary\steamapps\common\大千世界2 The Stupendous World Demo" `
+  -GameRoot "<你的游戏根目录>" `
   -RunSetup
 ```
 

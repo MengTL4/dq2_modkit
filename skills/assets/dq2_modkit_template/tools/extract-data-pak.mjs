@@ -1,12 +1,11 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import zlib from "node:zlib";
+import { resolveGameRoot, resolveProjectRootFromTool } from "./modkit-config.mjs";
 
-const toolDir = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.resolve(toolDir, "..");
-const gameRoot = path.resolve(projectRoot, "..");
+const projectRoot = resolveProjectRootFromTool(import.meta.url);
+const gameRoot = resolveGameRoot(projectRoot);
 const outDir = path.join(projectRoot, "output", "extract", "data");
 const bootstrapKey = "f5bd74e6a64130031cd105edce551df2";
 

@@ -396,7 +396,30 @@ Keep per-actor per-skill baselines.
 When current > baseline, write baseline + (current - baseline) * skillRate.
 ```
 
-## 9. Validation Commands
+## 9. Game Root Config Contract
+
+Commit only the example:
+
+```json
+{
+  "gameRoot": "D:\\SteamLibrary\\steamapps\\common\\大千世界2 The Stupendous World Demo"
+}
+```
+
+Each user may copy it to `config.local.json`. The local file is ignored by Git. All scripts that need original game files should resolve the game root in this order:
+
+```text
+-GameRoot parameter
+DQ2_GAME_ROOT environment variable
+config.local.json gameRoot
+parent directory of dq2_modkit
+```
+
+The selected directory is valid only when it contains `www/index.html`.
+
+PowerShell `-GameRoot` relative paths are relative to the caller's current location. Config/env relative paths are relative to `dq2_modkit`.
+
+## 10. Validation Commands
 
 Prerequisites:
 
@@ -410,35 +433,36 @@ If PowerShell blocks scripts, prefix `.ps1` checks with `powershell -NoProfile -
 Syntax:
 
 ```powershell
-node --check .\dq2_modkit\tools\extract-bytecode-bundles.mjs
-node --check .\dq2_modkit\tools\extract-data-pak.mjs
-node --check .\dq2_modkit\tools\extract-usedata.mjs
-node --check .\dq2_modkit\tools\encrypt-saves.mjs
-node --check .\dq2_modkit\tools\trainer-send.mjs
-node --check .\dq2_modkit\runtime\bridge\page-bridge.js
-node --check .\dq2_modkit\app\gui\app.js
+cd "<dq2_modkit>"
+node --check .\tools\modkit-config.mjs
+node --check .\tools\extract-bytecode-bundles.mjs
+node --check .\tools\extract-data-pak.mjs
+node --check .\tools\extract-usedata.mjs
+node --check .\tools\encrypt-saves.mjs
+node --check .\tools\trainer-send.mjs
+node --check .\runtime\bridge\page-bridge.js
+node --check .\app\gui\app.js
 ```
 
 Runtime generation:
 
 ```powershell
-.\dq2_modkit\tools\setup-runtime.ps1
-.\dq2_modkit\tools\setup-runtime.ps1 -Force
-.\dq2_modkit\tools\clean-runtime.ps1 -DryRun
+.\tools\setup-runtime.ps1
+.\tools\setup-runtime.ps1 -Force
+.\tools\clean-runtime.ps1 -DryRun
 ```
 
 Extraction and save round trip:
 
 ```powershell
-.\dq2_modkit\tools\extract-all.ps1
-.\dq2_modkit\tools\encrypt-saves.ps1
+.\tools\extract-all.ps1
+.\tools\encrypt-saves.ps1
 ```
 
 CLI bridge checks after launching the bridge game:
 
 ```powershell
-cd .\dq2_modkit\tools
-node .\trainer-send.mjs status
-node .\trainer-send.mjs ping
-node .\trainer-send.mjs trainer.hooks.info
+node .\tools\trainer-send.mjs status
+node .\tools\trainer-send.mjs ping
+node .\tools\trainer-send.mjs trainer.hooks.info
 ```

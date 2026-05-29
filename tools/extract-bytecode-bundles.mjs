@@ -1,11 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import zlib from "node:zlib";
+import { resolveGameRoot, resolveProjectRootFromTool } from "./modkit-config.mjs";
 
-const toolDir = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.resolve(toolDir, "..");
-const gameRoot = path.resolve(projectRoot, "..");
+const projectRoot = resolveProjectRootFromTool(import.meta.url);
+const gameRoot = resolveGameRoot(projectRoot);
 const outDir = path.join(projectRoot, "runtime", "save-harness");
 
 const wanted = new Map([
