@@ -438,7 +438,7 @@ Override parameter: -NpmRegistry
 Override environment: DQ2_NPM_REGISTRY
 ```
 
-`setup-runtime.ps1` installs tool/save-harness dependencies. `launch-save-editor.ps1` installs `app/save-editor` dependencies. Scripts that may install dependencies should pass through `-NpmRegistry` or respect `DQ2_NPM_REGISTRY`.
+`setup-runtime.ps1` installs tool/save-harness dependencies. `launch-save-editor.ps1` installs `app/save-editor` dependencies. `launch-gui.ps1` installs `app/gui` dependencies only when the TypeScript source needs rebuilding. Scripts that may install dependencies should pass through `-NpmRegistry` or respect `DQ2_NPM_REGISTRY`.
 
 Syntax:
 
@@ -452,6 +452,9 @@ node --check .\tools\encrypt-saves.mjs
 node --check .\tools\trainer-send.mjs
 node --check .\runtime\bridge\page-bridge.js
 node --check .\app\gui\app.js
+Push-Location .\app\gui
+npm.cmd run build
+Pop-Location
 Push-Location .\app\save-editor
 npm.cmd run build
 Pop-Location

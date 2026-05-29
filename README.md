@@ -73,7 +73,7 @@ docs/技术实现文档.md
 ## 结构
 
 ```text
-app/gui/                 GUI 修改器 NW 应用
+app/gui/                 GUI 修改器 NW 应用，app.ts 编译为 app.js
 app/save-editor/         纯网页离线存档树形编辑器
 runtime/trainer/         bridge 版游戏启动器
 runtime/bridge/          注入游戏页面的 bridge 脚本
@@ -112,6 +112,18 @@ skills/                  复刻本项目用的 Codex skill
 ```powershell
 $env:DQ2_NPM_REGISTRY = "https://registry.npmmirror.com"
 ```
+
+## GUI TypeScript
+
+GUI 修改器的源码是 `app/gui/app.ts`，NW 实际加载的是编译后的 `app/gui/app.js`。开发时手动构建：
+
+```powershell
+cd .\app\gui
+npm.cmd install --registry https://registry.npmmirror.com
+npm.cmd run build
+```
+
+`tools/launch-gui.ps1` 会在发现 `app.ts` 比 `app.js` 新时自动执行同样的构建流程。
 
 需要清空这些生成产物时执行：
 

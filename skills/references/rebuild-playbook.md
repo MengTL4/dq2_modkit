@@ -131,7 +131,10 @@ dq2_modkit/
     package.json
     index.html
     styles.css
+    app.ts
     app.js
+    tsconfig.json
+    package-lock.json
   app/save-editor/
     package.json
     index.html
@@ -262,6 +265,8 @@ app/gui
 runtime/trainer
 runtime/save-harness
 ```
+
+Author `app/gui` behavior in TypeScript (`app.ts`) and compile it to `app.js`, because the NW package still loads `app.js` from `index.html`. `launch-gui.ps1` should rebuild when `app.ts` is newer than `app.js`, using the configured npm registry.
 
 Do not include `app/save-editor` in these NW runtime targets. It is a Vite browser app and should not receive `Game.exe`, `nw.dll`, or junctions.
 
@@ -437,6 +442,7 @@ node --check .\runtime\bridge\page-bridge.js
 node --check .\app\gui\app.js
 node --check .\tools\modkit-config.mjs
 node --check .\tools\trainer-send.mjs
+Push-Location .\app\gui; npm.cmd run build; Pop-Location
 Push-Location .\app\save-editor; npm.cmd run build; Pop-Location
 .\tools\extract-all.ps1
 .\tools\encrypt-saves.ps1

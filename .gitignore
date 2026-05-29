@@ -1,6 +1,7 @@
 # Node dependencies
 tools/node_modules/
 runtime/save-harness/node_modules/
+app/gui/node_modules/
 
 # Generated output and backups
 output/*
@@ -27,6 +28,7 @@ app/gui/*.bin
 app/gui/Dictionaries/
 app/gui/locales/
 app/gui/swiftshader/
+app/gui/*.tsbuildinfo
 
 app/save-editor/node_modules/
 app/save-editor/dist/

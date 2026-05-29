@@ -1,15 +1,19 @@
 :root {
-  --bg: #0d1114;
-  --panel: #151b1f;
-  --line: #2d3940;
-  --text: #edf4ef;
-  --muted: #9cabaa;
-  --accent: #e0b84a;
-  --accent-2: #4fc3a1;
-  --danger: #e07063;
-  --ink: #07100d;
-  color-scheme: dark;
-  font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-2: #f0f6ff;
+  --line: #d8e2ec;
+  --line-strong: #b9c7d6;
+  --text: #102033;
+  --muted: #607085;
+  --primary: #1d4ed8;
+  --primary-2: #2563eb;
+  --accent: #0f766e;
+  --danger: #c2410c;
+  --warning: #b45309;
+  --shadow: 0 14px 34px rgba(15, 23, 42, .08);
+  color-scheme: light;
+  font-family: "Microsoft YaHei UI", "Segoe UI", Arial, sans-serif;
 }
 
 * {
@@ -27,10 +31,9 @@ body,
 body {
   color: var(--text);
   background:
-    linear-gradient(90deg, rgba(224, 184, 74, .052) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(79, 195, 161, .04) 1px, transparent 1px),
+    linear-gradient(135deg, rgba(29, 78, 216, .08), transparent 32%),
+    linear-gradient(315deg, rgba(15, 118, 110, .07), transparent 34%),
     var(--bg);
-  background-size: 28px 28px;
   overflow: hidden;
 }
 
@@ -41,30 +44,37 @@ select {
 }
 
 button {
-  height: 36px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: #20292e;
+  min-height: 36px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: #ffffff;
   color: var(--text);
   padding: 0 14px;
   cursor: pointer;
-  transition: border-color .16s ease, transform .16s ease, background .16s ease;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
 }
 
 button:hover {
-  border-color: var(--accent);
-  background: #273239;
+  border-color: var(--primary-2);
+  color: var(--primary);
+  background: #f7fbff;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, .10);
 }
 
 button:active {
-  transform: translateY(1px);
+  background: #eef5ff;
 }
 
 button.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--ink);
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
   font-weight: 800;
+}
+
+button.primary:hover {
+  background: #1e40af;
+  color: #ffffff;
 }
 
 input,
@@ -72,11 +82,17 @@ select {
   width: 100%;
   height: 36px;
   border: 1px solid var(--line);
-  border-radius: 6px;
-  background: #101619;
+  border-radius: 7px;
+  background: #ffffff;
   color: var(--text);
   outline: none;
   padding: 0 10px;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--primary-2);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
 }
 
 label {
@@ -87,36 +103,39 @@ label {
 label span {
   color: var(--muted);
   font-size: 12px;
+  font-weight: 700;
 }
 
 .app-shell {
   display: grid;
   grid-template-rows: auto 1fr;
   height: 100%;
-  min-width: 1040px;
+  min-width: 980px;
 }
 
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 82px;
-  padding: 16px 22px;
+  min-height: 76px;
+  padding: 14px 20px;
   border-bottom: 1px solid var(--line);
-  background: rgba(13, 17, 20, .94);
+  background: rgba(255, 255, 255, .94);
+  backdrop-filter: blur(10px);
 }
 
 .eyebrow {
   color: var(--accent);
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 1.8px;
+  letter-spacing: 1.2px;
 }
 
 h1 {
   margin: 4px 0 0;
+  color: #0f172a;
   font-size: 24px;
-  line-height: 1.1;
+  line-height: 1.12;
   letter-spacing: 0;
 }
 
@@ -130,31 +149,34 @@ h1 {
   display: grid;
   place-items: center;
   min-width: 92px;
-  height: 32px;
-  border: 1px solid rgba(79, 195, 161, .75);
+  min-height: 34px;
+  border: 1px solid rgba(15, 118, 110, .32);
   border-radius: 999px;
-  color: var(--accent-2);
+  background: #ecfdf5;
+  color: var(--accent);
   padding: 0 12px;
   font-size: 13px;
+  font-weight: 800;
 }
 
 .status-error {
-  border-color: rgba(224, 112, 99, .82);
+  border-color: rgba(194, 65, 12, .28);
+  background: #fff7ed;
   color: var(--danger);
 }
 
 .layout {
   display: grid;
-  grid-template-columns: 310px 1fr;
-  gap: 14px;
+  grid-template-columns: 328px minmax(0, 1fr);
+  gap: 16px;
   min-height: 0;
-  padding: 14px;
+  padding: 16px;
 }
 
 .side-panel {
   display: grid;
-  grid-template-rows: auto auto 1fr;
-  gap: 14px;
+  grid-template-rows: auto auto minmax(80px, 1fr);
+  gap: 12px;
   min-height: 0;
 }
 
@@ -164,15 +186,15 @@ h1 {
   min-height: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(21, 27, 31, .95);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, .22);
+  background: rgba(255, 255, 255, .96);
+  box-shadow: var(--shadow);
   padding: 14px;
 }
 
 .panel-title {
   min-height: 24px;
   margin-bottom: 12px;
-  color: var(--accent);
+  color: #0f3f8c;
   font-size: 13px;
   font-weight: 800;
 }
@@ -185,8 +207,15 @@ h1 {
 
 .meta-list div {
   display: grid;
-  grid-template-columns: 72px 1fr;
+  grid-template-columns: 78px 1fr;
   gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+}
+
+.meta-list div:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .meta-list dt {
@@ -214,7 +243,9 @@ h1 {
 
 .error-panel {
   align-self: start;
-  color: #ffb4aa;
+  border-color: rgba(194, 65, 12, .22);
+  background: #fff7ed;
+  color: var(--danger);
   overflow-wrap: anywhere;
 }
 
@@ -230,21 +261,52 @@ h1 {
 
 .jsoneditor {
   border: 0 !important;
-  background: #f6f8f7;
+  background: #ffffff;
+  color: var(--text);
 }
 
 .jsoneditor-menu {
-  background: #20292e !important;
-  border-bottom-color: var(--line) !important;
+  background: #f8fafc !important;
+  border-bottom: 1px solid var(--line) !important;
+  color: var(--text) !important;
+}
+
+.jsoneditor-menu > button,
+.jsoneditor-menu > .jsoneditor-modes > button {
+  border-color: transparent !important;
+  background-color: transparent !important;
+  color: #0f3f8c !important;
+}
+
+.jsoneditor-menu > button:hover,
+.jsoneditor-menu > .jsoneditor-modes > button:hover {
+  background-color: #eff6ff !important;
 }
 
 .jsoneditor-navigation-bar,
 .jsoneditor-statusbar {
-  background: #edf4ef !important;
+  background: #ffffff !important;
+  border-color: var(--line) !important;
+  color: var(--muted) !important;
 }
 
 .jsoneditor-tree,
 .jsoneditor textarea,
 .jsoneditor input {
   font-family: "Cascadia Mono", Consolas, monospace !important;
+}
+
+.jsoneditor-field,
+.jsoneditor-value {
+  color: var(--text) !important;
+}
+
+@media (max-width: 1080px) {
+  .layout {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+
+  .top-actions {
+    gap: 8px;
+  }
 }

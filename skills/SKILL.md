@@ -47,7 +47,7 @@ When building from scratch or adapting to a changed game, read:
 7. Implement `clean-runtime.ps1` so it safely removes only generated artifacts.
 8. Implement extractors next: `data.pak`, `useData`, and saves. Use structured parsers and cryptographic verification; do not rely on ad hoc text parsing.
 9. Implement the runtime bridge command loop over local JSONL files, then expose commands through `trainer-send.mjs`.
-10. Build the external GUI last. It should read exported data for searchable lists and communicate only through the bridge-state command queue.
+10. Build the external GUI last. Author GUI behavior in `app/gui/app.ts`, compile it to `app/gui/app.js` for NW, read exported data for searchable lists, and communicate only through the bridge-state command queue.
 11. Add the offline save tree editor as a separate Vite/React module. It must not depend on NW runtime files or bridge injection; it should edit local `.rpgsave` files through browser file APIs.
 12. Validate each layer independently: setup/clean, JS syntax, save-editor build, data extraction, save round-trip encryption, bridge status, GUI smoke.
 13. Update usage and technical docs so the project remains reproducible after game updates and portable across user install paths.
@@ -60,6 +60,7 @@ When building from scratch or adapting to a changed game, read:
 - Resolve both standard RPG Maker globals and TK aliases. Many failures come from patching only `$gameParty`/`BattleManager` while the game uses `TK.$.*` aliases.
 - Make every command return structured success/failure events with enough error text for GUI and CLI debugging.
 - Use virtualized lists in the GUI for items, skills, variables, switches, maps, and events.
+- Keep GUI and save-editor visuals in a light, dense tool layout unless the user explicitly requests a dark theme.
 - Keep the save editor raw and file-oriented: JSON tree editing plus decrypt/encrypt only, no trainer shortcuts.
 - Add a validation step after every major layer. Do not stop after writing files.
 

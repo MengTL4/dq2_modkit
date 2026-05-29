@@ -1,8 +1,16 @@
 {
   "name": "codex-trainer-gui",
+  "private": true,
   "main": "index.html",
   "nodejs": true,
   "node-remote": "<all_urls>",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "typescript": "^5.6.3"
+  },
   "window": {
     "title": "大千世界2 修改器",
     "width": 1120,
