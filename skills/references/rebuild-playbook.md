@@ -276,8 +276,9 @@ Implement `clean-runtime.ps1` to delete only:
 - Generated junctions.
 - Extracted `.jsc` bytecode in `runtime/save-harness`.
 - `probe-result.json`.
+- Extracted output under `output/extract/data`, `output/extract/useData`, and `output/extract/save`.
 
-It must verify every target path stays under `dq2_modkit`. It must refuse ordinary directories unless explicitly cleaning dependency directories with `-IncludeDependencies`.
+It must verify every target path stays under `dq2_modkit`. It must refuse ordinary directories unless explicitly cleaning the generated extract directories above, or dependency directories with `-IncludeDependencies`. Do not delete `output/backup` or `output/repack` by default.
 
 ## 7. Data Extractors
 

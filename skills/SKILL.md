@@ -55,7 +55,7 @@ When building from scratch or adapting to a changed game, read:
 ## Implementation Rules
 
 - Keep original game files unchanged. The modkit normally lives beside the game in `dq2_modkit`, but the game root must also be configurable for users who keep the project elsewhere.
-- Treat NW runtime binaries, locales, dictionaries, `.jsc` bytecode, extracted JSON, and `node_modules` as generated artifacts.
+- Treat NW runtime binaries, locales, dictionaries, `.jsc` bytecode, `output/extract` JSON/MessagePack, and `node_modules` as generated artifacts.
 - Prefer calling game runtime functions over writing object internals when possible: `$gameParty.gainItem`, `$gameActors.actor(id).learnSkill`, `DataManager.saveGame`, `$gameVariables.setValue`.
 - Resolve both standard RPG Maker globals and TK aliases. Many failures come from patching only `$gameParty`/`BattleManager` while the game uses `TK.$.*` aliases.
 - Make every command return structured success/failure events with enough error text for GUI and CLI debugging.

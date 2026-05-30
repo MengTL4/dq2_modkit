@@ -40,6 +40,11 @@ $BytecodeFiles = @(
 )
 
 $GeneratedSaveHarnessFiles = @("probe-result.json")
+$ExtractedDirs = @(
+  "output\extract\data",
+  "output\extract\useData",
+  "output\extract\save"
+)
 $DependencyDirs = @("tools\node_modules", "runtime\save-harness\node_modules")
 
 function Resolve-FullPath {
@@ -106,6 +111,10 @@ foreach ($targetRel in $Targets) {
 $saveHarness = Join-Path $ProjectRoot "runtime\save-harness"
 foreach ($file in $BytecodeFiles + $GeneratedSaveHarnessFiles) {
   $removed += Remove-GeneratedItem -Path (Join-Path $saveHarness $file)
+}
+
+foreach ($dir in $ExtractedDirs) {
+  $removed += Remove-GeneratedItem -Path (Join-Path $ProjectRoot $dir) -AllowRegularDirectory
 }
 
 if ($IncludeDependencies) {
