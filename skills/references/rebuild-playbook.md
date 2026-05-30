@@ -266,7 +266,7 @@ runtime/trainer
 runtime/save-harness
 ```
 
-Author `app/gui` behavior in TypeScript (`app.ts`) and compile it to `app.js`, because the NW package still loads `app.js` from `index.html`. `launch-gui.ps1` should rebuild when `app.ts` is newer than `app.js`, using the configured npm registry.
+Author `app/gui` behavior in TypeScript (`app.ts`) and compile it to `app.js`, because the NW package still loads `app.js` from `index.html`. `launch-gui.ps1` should rebuild when `app.ts` is newer than `app.js`, using the configured npm registry. It should also ensure `data.pak` has been extracted to `output/extract/data` before opening the GUI, rerunning `extract-data-pak.mjs` when required JSON files are missing or `www/data.pak` is newer than the extracted `_index.json`.
 
 Do not include `app/save-editor` in these NW runtime targets. It is a Vite browser app and should not receive `Game.exe`, `nw.dll`, or junctions.
 

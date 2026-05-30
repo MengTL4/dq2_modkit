@@ -438,7 +438,7 @@ Override parameter: -NpmRegistry
 Override environment: DQ2_NPM_REGISTRY
 ```
 
-`setup-runtime.ps1` installs tool/save-harness dependencies. `launch-save-editor.ps1` installs `app/save-editor` dependencies. `launch-gui.ps1` installs `app/gui` dependencies only when the TypeScript source needs rebuilding. Scripts that may install dependencies should pass through `-NpmRegistry` or respect `DQ2_NPM_REGISTRY`.
+`setup-runtime.ps1` installs tool/save-harness dependencies. `launch-save-editor.ps1` installs `app/save-editor` dependencies. `launch-gui.ps1` installs `app/gui` dependencies only when the TypeScript source needs rebuilding, and it must auto-run `extract-data-pak.mjs` when `output/extract/data` is missing or older than `www/data.pak` so GUI lists are available on first launch. Scripts that may install dependencies should pass through `-NpmRegistry` or respect `DQ2_NPM_REGISTRY`.
 
 Syntax:
 

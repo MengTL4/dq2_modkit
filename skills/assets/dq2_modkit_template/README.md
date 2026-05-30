@@ -123,7 +123,7 @@ npm.cmd install --registry https://registry.npmmirror.com
 npm.cmd run build
 ```
 
-`tools/launch-gui.ps1` 会在发现 `app.ts` 比 `app.js` 新时自动执行同样的构建流程。
+`tools/launch-gui.ps1` 会在发现 `app.ts` 比 `app.js` 新时自动执行同样的构建流程；启动前也会检查 `output/extract/data`，如果 `data.pak` 还没导出或游戏更新后数据过期，会自动运行 `extract-data-pak.mjs` 生成 GUI 列表数据。
 
 GUI 中的物品、技能、角色、变量、开关、地图、事件等长列表默认按 `20` 条分页显示，并提供首页、上一页、下一页和末页按钮。脱机挂机地图列表会显示全部地图，没有随机遇敌表的地图会标记为“无遇敌”，这类地图需要改用敌群挂机。
 

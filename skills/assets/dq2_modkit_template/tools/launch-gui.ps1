@@ -13,6 +13,44 @@ $Gui = Join-Path $ProjectRoot "app\gui"
 $GameExe = Join-Path $Gui "Game.exe"
 $AppTs = Join-Path $Gui "app.ts"
 $AppJs = Join-Path $Gui "app.js"
+$ExtractDataDir = Join-Path $ProjectRoot "output\extract\data"
+$DataPak = Join-Path $GameRoot "www\data.pak"
+
+function Test-GuiDataExtractReady {
+  if (-not (Test-Path -LiteralPath $ExtractDataDir)) { return $false }
+  $requiredFiles = @(
+    "_index.json",
+    "System.json",
+    "Items.json",
+    "Weapons.json",
+    "Armors.json",
+    "Actors.json",
+    "Skills.json",
+    "MapInfos.json",
+    "Troops.json",
+    "Enemies.json",
+    "CommonEvents.json"
+  )
+  foreach ($fileName in $requiredFiles) {
+    if (-not (Test-Path -LiteralPath (Join-Path $ExtractDataDir $fileName))) {
+      return $false
+    }
+  }
+  $indexPath = Join-Path $ExtractDataDir "_index.json"
+  if ((Test-Path -LiteralPath $DataPak) -and (Test-Path -LiteralPath $indexPath)) {
+    if ((Get-Item -LiteralPath $DataPak).LastWriteTimeUtc -gt (Get-Item -LiteralPath $indexPath).LastWriteTimeUtc) {
+      return $false
+    }
+  }
+  return $true
+}
+
+function Invoke-DataExtractIfNeeded {
+  if (Test-GuiDataExtractReady) { return }
+  Write-Host "Extracted data not found or stale. Extracting www/data.pak for GUI lists..."
+  & node (Join-Path $PSScriptRoot "extract-data-pak.mjs")
+  if ($LASTEXITCODE -ne 0) { throw "extract-data-pak.mjs failed with exit code $LASTEXITCODE" }
+}
 
 function Invoke-GuiBuildIfNeeded {
   if (-not (Test-Path -LiteralPath $AppTs)) { return }
@@ -49,6 +87,7 @@ function Invoke-GuiBuildIfNeeded {
   }
 }
 
+Invoke-DataExtractIfNeeded
 Invoke-GuiBuildIfNeeded
 
 if (-not (Test-Path -LiteralPath $GameExe)) {

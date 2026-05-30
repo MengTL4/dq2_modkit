@@ -60,6 +60,7 @@ When building from scratch or adapting to a changed game, read:
 - Resolve both standard RPG Maker globals and TK aliases. Many failures come from patching only `$gameParty`/`BattleManager` while the game uses `TK.$.*` aliases.
 - Make every command return structured success/failure events with enough error text for GUI and CLI debugging.
 - Use searchable paged lists in the GUI for items, skills, variables, switches, maps, and events; default to 20 rows per page and provide previous/next navigation.
+- Ensure `launch-gui.ps1` extracts `data.pak` automatically before opening the GUI when `output/extract/data` is missing or stale, because the GUI list/search/catalog surfaces depend on those JSON files.
 - Keep GUI and save-editor visuals in a light, dense tool layout unless the user explicitly requests a dark theme.
 - Keep the save editor raw and file-oriented: JSON tree editing plus decrypt/encrypt only, no trainer shortcuts.
 - Add a validation step after every major layer. Do not stop after writing files.
