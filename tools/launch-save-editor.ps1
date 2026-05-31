@@ -1,5 +1,6 @@
 param(
   [int]$Port = 5174,
+  [int]$PortSearchLimit = 20,
   [string]$NpmRegistry,
   [switch]$NoOpen
 )
@@ -40,10 +41,64 @@ function Test-SaveEditorServer {
   param([string]$Url)
   try {
     $response = Invoke-WebRequest -UseBasicParsing -Uri $Url -TimeoutSec 2
-    return $response.StatusCode -ge 200 -and $response.StatusCode -lt 500
+    if ($response.StatusCode -lt 200 -or $response.StatusCode -ge 500) {
+      return $false
+    }
+
+    $content = [string]$response.Content
+    return $content.Contains('name="dq2-modkit-app" content="save-editor"') -or
+      $content.Contains("<title>大千世界2 存档编辑器</title>")
   } catch {
     return $false
   }
+}
+
+function Test-LocalPortInUse {
+  param([int]$Port)
+  $listeners = [System.Net.NetworkInformation.IPGlobalProperties]::GetIPGlobalProperties().GetActiveTcpListeners()
+  foreach ($listener in $listeners) {
+    if ($listener.Port -ne $Port) {
+      continue
+    }
+
+    $address = $listener.Address
+    if ($address.Equals([System.Net.IPAddress]::Loopback) -or
+      $address.Equals([System.Net.IPAddress]::Any) -or
+      $address.Equals([System.Net.IPAddress]::IPv6Loopback) -or
+      $address.Equals([System.Net.IPAddress]::IPv6Any)) {
+      return $true
+    }
+  }
+
+  return $false
+}
+
+$selectedPort = $null
+for ($candidatePort = $Port; $candidatePort -lt ($Port + $PortSearchLimit); $candidatePort++) {
+  $candidateUrl = "http://127.0.0.1:$candidatePort"
+  if (Test-SaveEditorServer -Url $candidateUrl) {
+    if (-not $NoOpen) {
+      Start-Process $candidateUrl
+    }
+    Write-Host "Save editor already running at $candidateUrl"
+    return
+  }
+
+  if (-not (Test-LocalPortInUse -Port $candidatePort)) {
+    $selectedPort = $candidatePort
+    $url = $candidateUrl
+    break
+  }
+
+  Write-Host "Port $candidatePort is in use by another app; trying next port."
+}
+
+if ($null -eq $selectedPort) {
+  throw "No free port found from $Port to $($Port + $PortSearchLimit - 1)."
+}
+
+if ($selectedPort -ne $Port) {
+  Write-Host "Using save editor port $selectedPort instead of $Port."
 }
 
 if (Test-SaveEditorServer -Url $url) {
@@ -54,14 +109,30 @@ if (Test-SaveEditorServer -Url $url) {
   return
 }
 
-Start-Process -FilePath $npmCommand `
-  -ArgumentList @("run", "dev", "--", "--host", "127.0.0.1", "--port", [string]$Port, "--strictPort") `
+$viteProcess = Start-Process -FilePath $npmCommand `
+  -ArgumentList @("run", "dev", "--", "--host", "127.0.0.1", "--port", [string]$selectedPort, "--strictPort") `
   -WorkingDirectory $Editor `
   -WindowStyle Hidden `
   -RedirectStandardOutput $logPath `
-  -RedirectStandardError $errPath
+  -RedirectStandardError $errPath `
+  -PassThru
 
-Start-Sleep -Milliseconds 900
+$started = $false
+for ($attempt = 0; $attempt -lt 20; $attempt++) {
+  Start-Sleep -Milliseconds 250
+  if (Test-SaveEditorServer -Url $url) {
+    $started = $true
+    break
+  }
+  if ($viteProcess.HasExited) {
+    break
+  }
+}
+
+if (-not $started) {
+  throw "Save editor did not start at $url. Check logs: $logPath and $errPath"
+}
+
 if (-not $NoOpen) {
   Start-Process $url
 }
