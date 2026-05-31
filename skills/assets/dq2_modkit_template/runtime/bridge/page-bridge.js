@@ -2,7 +2,7 @@
   if (window.__codexLocalTrainerBridge) return;
 
   const bridge = {
-    version: "0.2.29",
+    version: "0.2.28",
     startedAt: new Date().toISOString(),
     startedAtMs: Date.now(),
     processed: Object.create(null),
@@ -60,13 +60,11 @@
   const bridgeDir = path.join(projectRoot, "runtime", "bridge-state");
   const saveDir = path.join(gameRoot, "www", "save");
   const dataDir = path.join(projectRoot, "output", "extract", "data");
-  const useDataDir = path.join(projectRoot, "output", "extract", "useData");
   const commandPath = path.join(bridgeDir, "commands.jsonl");
   const eventPath = path.join(bridgeDir, "events.jsonl");
   const statePath = path.join(bridgeDir, "state.json");
   const logPath = path.join(bridgeDir, "bridge.log");
   const dataCache = Object.create(null);
-  let shenMiaoAffixCache = null;
 
   function ensureDir() {
     try {
@@ -1753,10 +1751,6 @@
       item.descParams,
       item._descCT,
       item._descMosaic,
-      item._codexSpecialLabels,
-      item.specialLabels,
-      item._codexSpecialAffixes,
-      item._codexSpecialSkillIds,
       item.augmentSlots,
       item.augmentTypes,
       item.augmentDataAttach,
@@ -1768,228 +1762,14 @@
     ].forEach(value => pushText(value));
     const text = parts.join("\n");
     const labels = [];
-    const pushLabel = (label) => {
-      if (label && !labels.includes(label)) labels.push(label);
-    };
     const add = (needle, label) => {
-      if (text.includes(needle)) pushLabel(label);
+      if (text.includes(needle) && !labels.includes(label)) labels.push(label);
     };
     add("神妙", "神妙");
     add("天工开物", "天工开物");
     add("百炼天工", "百炼天工");
     if (!labels.includes("百炼天工")) add("百炼", "百炼");
-    const detailMatches = text.matchAll(/神妙[:：]\s*([^\s（(<>\n\r]+)/g);
-    for (const match of detailMatches) {
-      pushLabel(`神妙:${match[1]}`);
-      if (labels.length >= 8) break;
-    }
     return labels;
-  }
-
-  function specialLabelList(item) {
-    if (!item || typeof item !== "object") return [];
-    if (!Array.isArray(item._codexSpecialLabels)) item._codexSpecialLabels = [];
-    return item._codexSpecialLabels;
-  }
-
-  function addItemSpecialLabel(item, label) {
-    const labels = specialLabelList(item);
-    if (label && !labels.includes(label)) labels.push(label);
-    item.specialLabels = labels.slice();
-  }
-
-  function cleanNoteText(text) {
-    return String(text == null ? "" : text)
-      .replace(/[\r\n<>]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
-  function appendItemDescParam(item, text, color) {
-    const value = cleanNoteText(text);
-    if (!value) return;
-    if (!Array.isArray(item.descParams)) item.descParams = [];
-    const exists = item.descParams.some((entry) => {
-      if (Array.isArray(entry)) return String(entry[0] || "") === value;
-      return String(entry || "") === value;
-    });
-    if (!exists) item.descParams.push([value, 16, color || "rgba(250,175,0,1)", true]);
-  }
-
-  function appendItemNoteLine(item, text, colorControl, color) {
-    const value = cleanNoteText(text);
-    if (!value) return;
-    const note = String(item.note || "");
-    if (note.includes(value)) return;
-    const display = `${colorControl || ""}${value}`;
-    const line = `<pos=APs text=${display} size=16 color=${color || "rgba(250,175,0,1)"} line=false align=0>`;
-    item.note = `${note}${note && !note.endsWith("\n") ? "\n" : ""}${line}\n`;
-  }
-
-  function ensureSkillTrait(item, skillId) {
-    const id = Math.floor(looseNumber(skillId));
-    if (!Number.isFinite(id) || id <= 0) return false;
-    if (!Array.isArray(item.traits)) item.traits = [];
-    const exists = item.traits.some(trait =>
-      trait && Number(trait.code) === 43 && Math.floor(looseNumber(trait.dataId)) === id
-    );
-    if (!exists) item.traits.push({ code: 43, dataId: id, value: 1 });
-    if (!Array.isArray(item._codexSpecialSkillIds)) item._codexSpecialSkillIds = [];
-    if (!item._codexSpecialSkillIds.includes(id)) item._codexSpecialSkillIds.push(id);
-    if (!item.meta || typeof item.meta !== "object") item.meta = {};
-    item.meta.CodexEQlearn = String(id);
-    return !exists;
-  }
-
-  function skillEffectText(skill) {
-    const note = String(skill && skill.note || "");
-    const match = note.match(/text=([\s\S]*?)\s+size=/i);
-    return cleanNoteText(match && match[1] || "")
-      .replace(/\\c\[\d+\]/g, "")
-      .replace(/^效果[:：]\s*/, "")
-      .trim();
-  }
-
-  function shenMiaoAffixes() {
-    if (shenMiaoAffixCache) return shenMiaoAffixCache;
-    const skills = dataTable("skill");
-    const seen = new Set();
-    const affixes = [];
-    const pushAffix = (entry, source) => {
-      if (!entry || typeof entry !== "object") return;
-      const desc = cleanNoteText(entry.desc || entry.description || entry.text || entry.label || "");
-      const effect = String(entry.effect || entry.EQlearn || entry.eqlearn || "");
-      if (!desc.includes("神妙")) return;
-      const match = effect.match(/EQlearn\s*:?\s*(\d+)/i);
-      const skillId = match ? Math.floor(Number(match[1])) : 0;
-      const skill = skillId > 0 && skills && skills[skillId];
-      if (!skill) return;
-      const name = desc
-        .replace(/^.*?神妙[:：]\s*/, "")
-        .replace(/[（(].*$/, "")
-        .trim() || String(skill.name || `技能${skillId}`);
-      const key = `${skillId}:${desc}`;
-      if (seen.has(key)) return;
-      seen.add(key);
-      affixes.push({
-        skillId,
-        name,
-        desc: desc || `神妙:${name}`,
-        effectText: skillEffectText(skill),
-        source: source || "",
-        iconIndex: Number(skill.iconIndex || 0)
-      });
-    };
-    const walk = (value, source, depth) => {
-      if (!value || depth > 5) return;
-      if (Array.isArray(value)) {
-        value.forEach(entry => walk(entry, source, depth + 1));
-        return;
-      }
-      if (typeof value !== "object") return;
-      pushAffix(value, source);
-      Object.keys(value).forEach(key => walk(value[key], source, depth + 1));
-    };
-    try {
-      if (fs.existsSync(useDataDir)) {
-        fs.readdirSync(useDataDir)
-          .filter(name => /\.json$/i.test(name) && name !== "_index.json")
-          .forEach((name) => {
-            const file = path.join(useDataDir, name);
-            const raw = fs.readFileSync(file, "utf8");
-            if (!raw.includes("神妙") || !raw.includes("EQlearn")) return;
-            walk(JSON.parse(raw), name, 0);
-          });
-      }
-    } catch (error) {
-      bridge.lastError = String(error && error.stack || error);
-    }
-    (skills || []).forEach((skill) => {
-      if (!skill || !String(skill.description || "").includes("装备上的一种神妙")) return;
-      const detail = skillEffectText(skill);
-      pushAffix({
-        desc: `神妙:${skill.name || `技能${skill.id}`}${detail ? `（${detail}）` : ""}`,
-        effect: `EQlearn:${skill.id}`
-      }, "Skills.json");
-    });
-    shenMiaoAffixCache = affixes.sort((a, b) => a.skillId - b.skillId);
-    return shenMiaoAffixCache;
-  }
-
-  function chooseShenMiaoAffix() {
-    const affixes = shenMiaoAffixes();
-    if (!affixes.length) return null;
-    return affixes[Math.floor(Math.random() * affixes.length)];
-  }
-
-  function recordSpecialAffix(stats, label, detail) {
-    if (!stats) return;
-    stats.count = Number(stats.count || 0) + 1;
-    if (!stats.byLabel) stats.byLabel = Object.create(null);
-    stats.byLabel[label] = Number(stats.byLabel[label] || 0) + 1;
-    if (!stats.samples) stats.samples = [];
-    if (detail && stats.samples.length < 20) stats.samples.push(detail);
-  }
-
-  function appendCodexAffix(item, detail) {
-    if (!Array.isArray(item._codexSpecialAffixes)) item._codexSpecialAffixes = [];
-    item._codexSpecialAffixes.push(detail);
-  }
-
-  function applyShenMiaoAffix(item, stats) {
-    const affix = chooseShenMiaoAffix();
-    if (!affix) return false;
-    addItemSpecialLabel(item, "神妙");
-    addItemSpecialLabel(item, `神妙:${affix.name}`);
-    appendItemDescParam(item, affix.desc, "rgba(250,175,0,1)");
-    appendItemNoteLine(item, affix.desc, "\\c[14]", "rgba(250,175,0,1)");
-    const note = String(item.note || "");
-    item.note = `${note}${note && !note.endsWith("\n") ? "\n" : ""}EQlearn:${affix.skillId}\n<CodexSpecial:神妙>\n`;
-    ensureSkillTrait(item, affix.skillId);
-    if (!item.meta || typeof item.meta !== "object") item.meta = {};
-    item.meta.CodexShenMiao = `${affix.skillId}:${affix.name}`;
-    appendCodexAffix(item, {
-      label: "神妙",
-      name: affix.name,
-      desc: affix.desc,
-      skillId: affix.skillId,
-      iconIndex: affix.iconIndex
-    });
-    recordSpecialAffix(stats, "神妙", { name: affix.name, skillId: affix.skillId });
-    return true;
-  }
-
-  function applyTianGongAffix(item, stats) {
-    addItemSpecialLabel(item, "天工开物");
-    appendItemDescParam(item, "天工开物:特殊词缀", "rgba(80,130,255,1)");
-    appendItemNoteLine(item, "天工开物:特殊词缀", "\\c[16]", "rgba(80,130,255,1)");
-    if (!item.meta || typeof item.meta !== "object") item.meta = {};
-    item.meta.CodexTianGong = "天工开物";
-    const note = String(item.note || "");
-    item.note = `${note}${note && !note.endsWith("\n") ? "\n" : ""}<CodexSpecial:天工开物>\n`;
-    appendCodexAffix(item, { label: "天工开物", name: "天工开物" });
-    recordSpecialAffix(stats, "天工开物", { name: "天工开物" });
-    return true;
-  }
-
-  function specialRoll(rate, baseChance) {
-    const number = Math.max(0, Number(rate || 0));
-    if (number <= 0) return false;
-    return Math.random() < Math.min(1, Math.max(0, baseChance) * number);
-  }
-
-  function applyOfflineSpecialAffixes(item, config, stats) {
-    const summary = itemSummary(item);
-    if (!summary || (summary.kind !== "weapon" && summary.kind !== "armor")) return item;
-    const labels = itemSpecialLabels(item);
-    if (!labels.includes("神妙") && (config.forceShenMiao || specialRoll(config.specialRate, 0.01))) {
-      applyShenMiaoAffix(item, stats);
-    }
-    const nextLabels = itemSpecialLabels(item);
-    if (!nextLabels.includes("天工开物") && (config.forceTiangong || specialRoll(config.specialRate, 0.005))) {
-      applyTianGongAffix(item, stats);
-    }
-    return item;
   }
 
   function normalizeQualitySet(value) {
@@ -2010,17 +1790,11 @@
     command = command || {};
     const rawMode = String(command.dropMode || (toBool(command.nativeDrops) ? "runtime" : "data")).toLowerCase();
     const dropMode = rawMode === "runtime" || rawMode === "native" ? "runtime" : "data";
-    const requestedSpecialRate = looseNumber(command.specialRate);
-    const hasSpecialBoostFlag = Object.prototype.hasOwnProperty.call(command, "specialBoost");
-    const specialBoost = hasSpecialBoostFlag ? toBool(command.specialBoost) : Number(requestedSpecialRate) > 1;
     return {
       dropMode,
       nativeDrops: dropMode === "runtime",
       autoSellQualities: normalizeQualitySet(command.autoSellQualities),
-      blockDropQualities: normalizeQualitySet(command.blockDropQualities),
-      specialRate: specialBoost ? Math.max(1, Number.isFinite(requestedSpecialRate) ? requestedSpecialRate : 10) : 0,
-      forceShenMiao: toBool(command.forceShenMiao || command.forceSpecialShenMiao),
-      forceTiangong: toBool(command.forceTiangong || command.forceTianGong || command.forceSpecialTiangong)
+      blockDropQualities: normalizeQualitySet(command.blockDropQualities)
     };
   }
 
@@ -2549,7 +2323,6 @@
     const blockedDropGroups = Object.create(null);
     const enemyIds = [];
     const lootConfig = offlineLootConfig(command);
-    const specialAffixStats = { count: 0, byLabel: Object.create(null), samples: [] };
     const keptItems = [];
     let baseExp = 0;
     let baseGold = 0;
@@ -2609,13 +2382,9 @@
       keptItems.forEach((item) => {
         const gained = gainOfflineItem(party, item);
         if (gained.ok && gained.items.length) {
-          gained.items.forEach((gainedItem) => {
-            const finalItem = applyOfflineSpecialAffixes(gainedItem || item, lootConfig, specialAffixStats);
-            addDropGroup(dropGroups, finalItem || item, 1);
-          });
+          gained.items.forEach(gainedItem => addDropGroup(dropGroups, gainedItem || item, 1));
         } else {
-          const finalItem = applyOfflineSpecialAffixes(item, lootConfig, specialAffixStats);
-          addDropGroup(dropGroups, finalItem, 1);
+          addDropGroup(dropGroups, item, 1);
         }
       });
     });
@@ -2669,15 +2438,7 @@
         dropMode: lootConfig.dropMode,
         nativeDrops: lootConfig.nativeDrops,
         autoSellQualities: Array.from(lootConfig.autoSellQualities),
-        blockDropQualities: Array.from(lootConfig.blockDropQualities),
-        specialRate: lootConfig.specialRate,
-        forceShenMiao: lootConfig.forceShenMiao,
-        forceTiangong: lootConfig.forceTiangong
-      },
-      specialAffixes: {
-        count: specialAffixStats.count,
-        byLabel: { ...specialAffixStats.byLabel },
-        samples: specialAffixStats.samples
+        blockDropQualities: Array.from(lootConfig.blockDropQualities)
       },
       dropKindCounts: Object.values(dropGroups).reduce((counts, drop) => {
         const kind = drop && drop.kind || "item";

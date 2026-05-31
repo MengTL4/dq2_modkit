@@ -380,7 +380,6 @@ save
 title.refresh
 trainer.options.set
 trainer.hooks.info
-offlineHunt.preview / offlineHunt.probe / offlineHunt.run
 ```
 
 Feature implementation guidelines:
@@ -391,8 +390,6 @@ Feature implementation guidelines:
 - `switch.set`: call `$gameSwitches.setValue(id, Boolean(value))`.
 - `save`: call `DataManager.saveGame(savefileId)`.
 - Enemy book: update `ConfigManager.enemyBook` and save config.
-- Offline hunt: use map encounter lists or fixed troop IDs, calculate rewards without entering a battle scene, and keep the stable data-table roll as the source of repeated drops. If `nativeDrops=true`, gain retained weapon/armor drops through `party.gainItem(baseItem, 1)` and detect the newly created independent equip by taking `$gameParty._weapons` / `_armors` snapshots before and after.
-- Offline hunt special affixes: parse `useData` rows shaped like `神妙:*` + `EQlearn:<skillId>`, validate against skills, and add a standard MV skill-add trait `{ code: 43, dataId: skillId, value: 1 }` when applying forced/boosted `神妙`. Treat `天工开物` as display/special-label metadata unless the target data exposes a real effect pool.
 
 For rewards and combat:
 
@@ -426,7 +423,6 @@ Common: gold, rates, no-cost, party recover, save, title refresh
 Items/Actors: add item/weapon/armor, unlock actor, edit actor, learn/forget skill
 Map/Event: transfer, current position, common event
 Misc: variables, switches, enemy book unlock
-Offline: map hunt, troop hunt, preview, native drops, auto-sell/block qualities, boosted/forced special affixes
 Debug: raw JSON command
 ```
 

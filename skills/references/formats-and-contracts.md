@@ -327,23 +327,6 @@ save { savefileId }
 title.refresh
 trainer.options.set { expRate, goldRate, dropRate, skillRate, noSkillCost }
 trainer.hooks.info
-offlineHunt.preview { mapId | troopId }
-offlineHunt.probe { mapId | troopId, times }
-offlineHunt.run {
-  mapId | troopId,
-  times,
-  nativeDrops,
-  autoSellQualities,
-  blockDropQualities,
-  specialBoost,
-  specialRate,
-  forceShenMiao,
-  forceTiangong,
-  enemyBook,
-  recover,
-  save,
-  saveSlot
-}
 ```
 
 CLI aliases may accept positional forms, for example:
@@ -352,18 +335,9 @@ CLI aliases may accept positional forms, for example:
 node .\trainer-send.mjs item.add item 5 10
 node .\trainer-send.mjs actor.skill.learn 1 10
 node .\trainer-send.mjs trainer.options.set expRate=10 noSkillCost=true
-node .\trainer-send.mjs offlineHunt.run troopId=305 times=1000 nativeDrops=true forceShenMiao=true forceTiangong=true save=false
 ```
 
 Validate numeric fields with clear errors. The bridge should return `FAIL` events rather than throwing out of the polling loop.
-
-Offline hunt special-affix behavior:
-
-- `nativeDrops=true` should gain retained weapon/armor drops through the game's `party.gainItem(baseItem, 1)` so the runtime can create independent equips.
-- `specialBoost=true specialRate=5|10|20|50|100` may add extra special affixes after the independent equip is created.
-- `forceShenMiao=true` should add one useData-backed `神妙` affix to every retained weapon/armor. Parse useData rows shaped like `desc: "神妙:*"` plus `effect: "EQlearn:<skillId>"`, validate the skill against `Skills.json`, add display metadata, and add MV trait `{ code: 43, dataId: skillId, value: 1 }`.
-- `forceTiangong=true` should add `天工开物` display/special-label metadata. Do not invent hidden numeric effects unless the target game's extracted data exposes an actual effect pool.
-- Return `specialAffixes` in the event payload with total count, counts by label, and small samples for GUI display.
 
 ## 8. Hook Targets
 
