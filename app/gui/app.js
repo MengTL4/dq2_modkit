@@ -14,7 +14,7 @@
     const dataDir = path.join(projectRoot, "output", "extract", "data");
     const iconDir = path.join(process.cwd(), "icons");
     const iconSetPath = path.join(rootDir, "www", "img", "system", "IconSet.png");
-    const EXPECTED_BRIDGE_VERSION = "0.2.24";
+    const EXPECTED_BRIDGE_VERSION = "0.2.25";
     const $ = (id) => document.getElementById(id);
     const dom = {
         statusPill: $("statusPill"),
@@ -1667,16 +1667,20 @@
             save: !!$("offlineHuntSave").checked,
             saveSlot: numberValue("offlineHuntSaveSlot", 1),
             autoSellQualities: selectedOfflineQualities([
-                ["offlineAutoSellGray", 0],
-                ["offlineAutoSellWhite", 1],
-                ["offlineAutoSellGreen", 2],
-                ["offlineAutoSellBlue", 3],
-                ["offlineAutoSellPurple", 4]
+                ["offlineAutoSellPoor", 0],
+                ["offlineAutoSellCommon", 1],
+                ["offlineAutoSellGood", 2],
+                ["offlineAutoSellFine", 3],
+                ["offlineAutoSellGenuine", 4],
+                ["offlineAutoSellSupreme", 5],
+                ["offlineAutoSellLegendary", 6],
+                ["offlineAutoSellInheritance", 7],
+                ["offlineAutoSellImmortal", 8]
             ]),
             blockDropQualities: selectedOfflineQualities([
-                ["offlineBlockWhite", 1],
-                ["offlineBlockGreen", 2],
-                ["offlineBlockBlue", 3]
+                ["offlineBlockCommon", 1],
+                ["offlineBlockGood", 2],
+                ["offlineBlockFine", 3]
             ])
         };
     }
@@ -1880,6 +1884,7 @@
                         chance: Number(drop.chance || 0),
                         quality: drop.quality,
                         qualityLabel: drop.qualityLabel || "",
+                        specialLabels: Array.isArray(drop.specialLabels) ? drop.specialLabels : [],
                         troops: new Set()
                     };
                 }
@@ -1905,7 +1910,10 @@
     }
     function dropChipName(row) {
         const quality = row && row.qualityLabel ? `[${row.qualityLabel}] ` : "";
-        return `${quality}${row && (row.name || `${row.kind}:${row.id}`) || ""}`;
+        const special = row && Array.isArray(row.specialLabels) && row.specialLabels.length
+            ? ` · ${row.specialLabels.join("/")}`
+            : "";
+        return `${quality}${row && (row.name || `${row.kind}:${row.id}`) || ""}${special}`;
     }
     function updateOfflineHuntPanel(offlineHunt) {
         const last = offlineHunt && offlineHunt.last;

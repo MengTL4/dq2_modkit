@@ -2,7 +2,7 @@
   if (window.__codexLocalTrainerBridge) return;
 
   const bridge = {
-    version: "0.2.24",
+    version: "0.2.25",
     startedAt: new Date().toISOString(),
     startedAtMs: Date.now(),
     processed: Object.create(null),
@@ -1599,18 +1599,21 @@
     if (!item) return null;
     const kind = itemKindOfObject(item);
     const quality = itemQuality(item, kind);
+    const specialLabels = itemSpecialLabels(item);
     return {
       kind,
       id: Number(item.id || 0),
       name: String(item.name || ""),
       iconIndex: Number(item.iconIndex || 0),
       quality,
-      qualityLabel: qualityLabel(quality)
+      qualityLabel: qualityLabel(quality),
+      specialLabels
     };
   }
 
   function itemKey(summary) {
-    return `${summary.kind}:${summary.id}:${summary.name}`;
+    const special = Array.isArray(summary.specialLabels) ? summary.specialLabels.join("|") : "";
+    return `${summary.kind}:${summary.id}:${summary.name}:${special}`;
   }
 
   function addDropGroup(groups, item, count) {
@@ -1623,17 +1626,29 @@
 
   function itemQuality(item, kind) {
     if (!item || typeof item !== "object") return null;
-    const values = [
+    const directValues = [
       item.quality,
-      item.meta && item.meta.quality,
-      item.meta && item.meta.Quality
+      item._quality,
+      item.itemQuality,
+      item._itemQuality,
+      item.rarity,
+      item._rarity
     ];
-    for (const value of values) {
+    for (const value of directValues) {
       const number = looseNumber(value);
       if (Number.isFinite(number)) return Math.floor(number);
     }
     const match = String(item.note || "").match(/<\s*quality\s*:\s*([+-]?\d+(?:\.\d+)?)\s*>/i);
     if (match) return Math.floor(Number(match[1]));
+    const metaValues = [
+      item.meta && item.meta.quality,
+      item.meta && item.meta.Quality,
+      item.meta && item.meta["品质"]
+    ];
+    for (const value of metaValues) {
+      const number = looseNumber(value);
+      if (Number.isFinite(number)) return Math.floor(number);
+    }
     const tableKind = kind || itemKindOfObject(item);
     if (tableKind === "weapon" || tableKind === "armor") {
       const table = dropTable(tableKind);
@@ -1646,16 +1661,64 @@
 
   function qualityLabel(quality) {
     const labels = {
-      0: "灰",
-      1: "白",
-      2: "绿",
-      3: "蓝",
-      4: "紫",
-      5: "橙",
-      6: "红",
-      7: "金"
+      0: "劣品",
+      1: "凡品",
+      2: "良品",
+      3: "精品",
+      4: "真品",
+      5: "极品",
+      6: "传说",
+      7: "传承",
+      8: "不朽"
     };
     return Object.prototype.hasOwnProperty.call(labels, quality) ? labels[quality] : "";
+  }
+
+  function itemSpecialLabels(item) {
+    if (!item || typeof item !== "object") return [];
+    const parts = [];
+    const pushText = (value, depth = 0) => {
+      if (value == null || depth > 1) return;
+      if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+        parts.push(String(value));
+        return;
+      }
+      if (Array.isArray(value)) {
+        value.slice(0, 20).forEach(entry => pushText(entry, depth + 1));
+        return;
+      }
+      if (typeof value === "object") {
+        Object.keys(value).slice(0, 60).forEach((key) => {
+          if (/name|note|desc|text|label|prefix|suffix|affix|trait|quality|rarity|shen|tian|bailian|妙|天工|百炼/i.test(key)) {
+            pushText(value[key], depth + 1);
+          }
+        });
+      }
+    };
+    [
+      item.name,
+      item.description,
+      item.note,
+      item.prefix,
+      item.suffix,
+      item.affix,
+      item._prefix,
+      item._suffix,
+      item._affix,
+      item.qualityName,
+      item.rarityName,
+      item.meta
+    ].forEach(value => pushText(value));
+    const text = parts.join("\n");
+    const labels = [];
+    const add = (needle, label) => {
+      if (text.includes(needle) && !labels.includes(label)) labels.push(label);
+    };
+    add("神妙", "神妙");
+    add("天工开物", "天工开物");
+    add("百炼天工", "百炼天工");
+    if (!labels.includes("百炼天工")) add("百炼", "百炼");
+    return labels;
   }
 
   function normalizeQualitySet(value) {
@@ -1735,7 +1798,8 @@
         name: drop.item && drop.item.name || "",
         chance: drop.chance,
         quality: itemQuality(drop.item, drop.kind),
-        qualityLabel: qualityLabel(itemQuality(drop.item, drop.kind))
+        qualityLabel: qualityLabel(itemQuality(drop.item, drop.kind)),
+        specialLabels: itemSpecialLabels(drop.item)
       });
     });
     (enemy && enemy.dropItems || []).forEach((drop) => {
@@ -1749,7 +1813,8 @@
         name: item.name || "",
         chance: 1 / Math.max(1, Number(drop.denominator || 1)),
         quality: itemQuality(item, kind),
-        qualityLabel: qualityLabel(itemQuality(item, kind))
+        qualityLabel: qualityLabel(itemQuality(item, kind)),
+        specialLabels: itemSpecialLabels(item)
       });
     });
     return drops;
