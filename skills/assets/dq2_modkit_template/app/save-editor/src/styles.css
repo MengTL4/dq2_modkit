@@ -491,6 +491,7 @@ h1 {
   box-shadow: 0 0 0 2px rgba(37, 99, 235, .18), 0 1px 3px rgba(15, 23, 42, .12);
 }
 
+.jsoneditor > .jsoneditor-menu .jsoneditor-search input,
 .jsoneditor-search input {
   width: 132px !important;
   height: 22px !important;
@@ -504,6 +505,15 @@ h1 {
   color: #0f172a !important;
   caret-color: var(--primary) !important;
   font-weight: 800 !important;
+  text-shadow: none !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+.jsoneditor > .jsoneditor-menu .jsoneditor-search input::selection,
+.jsoneditor-search input::selection {
+  background: rgba(37, 99, 235, .22);
+  color: #0f172a;
+  -webkit-text-fill-color: #0f172a;
 }
 
 .jsoneditor-search button {
