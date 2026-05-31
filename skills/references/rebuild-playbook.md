@@ -32,7 +32,7 @@ Allowed project location:
 <game-root>/dq2_modkit
 ```
 
-Also support portable placement outside the game directory. In that case the user must set the game root through `-GameRoot`, `DQ2_GAME_ROOT`, or `config.local.json`.
+Also support portable placement outside the game directory. In that case the user should set the game root through `-GameRoot` or `config.local.json`; keep `DQ2_GAME_ROOT` as the last fallback so stale user environment variables do not override the normal `<game-root>/dq2_modkit` layout.
 
 The runtime trainer only affects windows launched through the modkit launcher. It does not attach to arbitrary running processes.
 

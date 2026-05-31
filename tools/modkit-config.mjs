@@ -9,7 +9,6 @@ export function resolveProjectRootFromTool(importMetaUrl) {
 export function resolveGameRoot(projectRoot, explicitGameRoot = "") {
   const candidates = [];
   if (explicitGameRoot) candidates.push({ value: explicitGameRoot, base: process.cwd() });
-  if (process.env.DQ2_GAME_ROOT) candidates.push({ value: process.env.DQ2_GAME_ROOT, base: projectRoot });
 
   const configPath = path.join(projectRoot, "config.local.json");
   if (fs.existsSync(configPath)) {
@@ -18,6 +17,7 @@ export function resolveGameRoot(projectRoot, explicitGameRoot = "") {
   }
 
   candidates.push({ value: path.resolve(projectRoot, ".."), base: projectRoot });
+  if (process.env.DQ2_GAME_ROOT) candidates.push({ value: process.env.DQ2_GAME_ROOT, base: projectRoot });
 
   for (const candidate of candidates) {
     if (!candidate.value) continue;

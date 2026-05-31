@@ -87,7 +87,7 @@ docs/                    使用和技术文档
 skills/                  复刻本项目用的 Codex skill
 ```
 
-推荐把这个目录放在游戏根目录下，此时工具会自动用 `dq2_modkit` 的父目录作为游戏目录。也可以放在任意位置，只要通过 `-GameRoot`、环境变量 `DQ2_GAME_ROOT` 或 `config.local.json` 指定游戏根目录即可。
+推荐把这个目录放在游戏根目录下，此时工具会自动用 `dq2_modkit` 的父目录作为游戏目录。也可以放在任意位置，只要通过 `-GameRoot` 或 `config.local.json` 指定游戏根目录即可；`DQ2_GAME_ROOT` 仍支持，但优先级低于项目父目录，避免旧环境变量把 GUI 带到别的游戏目录。
 
 ## 运行时生成
 
@@ -123,7 +123,7 @@ npm.cmd install --registry https://registry.npmmirror.com
 npm.cmd run build
 ```
 
-`tools/launch-gui.ps1` 会在发现 `app.ts` 比 `app.js` 新时自动执行同样的构建流程；启动前也会检查 `output/extract/data`，如果 `data.pak` 还没导出或游戏更新后数据过期，会自动运行 `extract-data-pak.mjs` 生成 GUI 列表数据。
+`tools/launch-gui.ps1` 会在发现 `app.ts` 比 `app.js` 新时自动执行同样的构建流程；启动前也会检查 `output/extract/data`，如果 `data.pak` 还没导出或游戏更新后数据过期，会自动运行 `extract-data-pak.mjs` 生成 GUI 列表数据，并生成 `_gui-cache.json` 加速地图/敌群列表加载。
 
 GUI 中的物品、技能、角色、变量、开关、地图、事件等长列表默认按 `20` 条分页显示，并提供首页、上一页、下一页和末页按钮。脱机挂机地图列表会显示全部地图，没有随机遇敌表的地图会标记为“无遇敌”，这类地图需要改用敌群挂机。掉落默认走数据表模拟，结果会按装备自动卖出语境显示 `粗糙`、`普通`、`优秀`、`精良`、`史诗`、`传说`、`神器`、`传承`、`不朽` 等基础品质；勾选“原生掉落”后会改用运行时 `Game_Troop.makeDropItems()` 返回的实际掉落对象，运行时对象里带有 `神妙`、`天工开物`、`百炼天工` 时会追加特殊标记。
 

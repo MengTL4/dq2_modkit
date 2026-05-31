@@ -15,6 +15,7 @@ $AppTs = Join-Path $Gui "app.ts"
 $AppJs = Join-Path $Gui "app.js"
 $ExtractDataDir = Join-Path $ProjectRoot "output\extract\data"
 $DataPak = Join-Path $GameRoot "www\data.pak"
+$GuiCache = Join-Path $ExtractDataDir "_gui-cache.json"
 
 function Test-GuiDataExtractReady {
   if (-not (Test-Path -LiteralPath $ExtractDataDir)) { return $false }
@@ -50,6 +51,36 @@ function Invoke-DataExtractIfNeeded {
   Write-Host "Extracted data not found or stale. Extracting www/data.pak for GUI lists..."
   & node (Join-Path $PSScriptRoot "extract-data-pak.mjs")
   if ($LASTEXITCODE -ne 0) { throw "extract-data-pak.mjs failed with exit code $LASTEXITCODE" }
+}
+
+function Test-GuiCacheReady {
+  if (-not (Test-GuiDataExtractReady)) { return $false }
+  if (-not (Test-Path -LiteralPath $GuiCache)) { return $false }
+  $cacheTime = (Get-Item -LiteralPath $GuiCache).LastWriteTimeUtc
+  $requiredFiles = @(
+    "MapInfos.json",
+    "Troops.json",
+    "Enemies.json",
+    "Items.json",
+    "Weapons.json",
+    "Armors.json"
+  )
+  foreach ($fileName in $requiredFiles) {
+    $filePath = Join-Path $ExtractDataDir $fileName
+    if (-not (Test-Path -LiteralPath $filePath)) { return $false }
+    if ((Get-Item -LiteralPath $filePath).LastWriteTimeUtc -gt $cacheTime) { return $false }
+  }
+  foreach ($mapFile in Get-ChildItem -LiteralPath $ExtractDataDir -Filter "Map*.json" -File) {
+    if ($mapFile.LastWriteTimeUtc -gt $cacheTime) { return $false }
+  }
+  return $true
+}
+
+function Invoke-GuiCacheIfNeeded {
+  if (Test-GuiCacheReady) { return }
+  Write-Host "Building GUI cache for map/troop lists..."
+  & node (Join-Path $PSScriptRoot "build-gui-cache.mjs")
+  if ($LASTEXITCODE -ne 0) { throw "build-gui-cache.mjs failed with exit code $LASTEXITCODE" }
 }
 
 function Invoke-GuiBuildIfNeeded {
@@ -88,6 +119,7 @@ function Invoke-GuiBuildIfNeeded {
 }
 
 Invoke-DataExtractIfNeeded
+Invoke-GuiCacheIfNeeded
 Invoke-GuiBuildIfNeeded
 
 if (-not (Test-Path -LiteralPath $GameExe)) {

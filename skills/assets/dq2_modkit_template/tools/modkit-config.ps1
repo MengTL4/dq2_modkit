@@ -14,10 +14,6 @@ function Resolve-Dq2GameRoot {
     $candidates.Add([pscustomobject]@{ Value = [string]$GameRoot; Base = $currentLocation })
   }
 
-  if ($env:DQ2_GAME_ROOT) {
-    $candidates.Add([pscustomobject]@{ Value = [string]$env:DQ2_GAME_ROOT; Base = $ProjectRoot })
-  }
-
   $configPath = Join-Path $ProjectRoot "config.local.json"
   if (Test-Path -LiteralPath $configPath) {
     try {
@@ -31,6 +27,10 @@ function Resolve-Dq2GameRoot {
   }
 
   $candidates.Add([pscustomobject]@{ Value = (Join-Path $ProjectRoot ".."); Base = $ProjectRoot })
+
+  if ($env:DQ2_GAME_ROOT) {
+    $candidates.Add([pscustomobject]@{ Value = [string]$env:DQ2_GAME_ROOT; Base = $ProjectRoot })
+  }
 
   foreach ($candidate in $candidates) {
     if (-not $candidate.Value) { continue }

@@ -12,9 +12,11 @@
     const statePath = path.join(bridgeDir, "state.json");
     const saveDir = path.join(rootDir, "www", "save");
     const dataDir = path.join(projectRoot, "output", "extract", "data");
+    const guiCachePath = path.join(dataDir, "_gui-cache.json");
     const iconDir = path.join(process.cwd(), "icons");
     const iconSetPath = path.join(rootDir, "www", "img", "system", "IconSet.png");
     const EXPECTED_BRIDGE_VERSION = "0.2.27";
+    const GUI_CACHE_VERSION = 1;
     const $ = (id) => document.getElementById(id);
     const dom = {
         statusPill: $("statusPill"),
@@ -101,6 +103,7 @@
     };
     let selectedItemKind = "item";
     const systemData = readJson(path.join(dataDir, "System.json")) || {};
+    const guiCache = loadGuiCache();
     const catalogs = {
         variable: loadNamedArrayCatalog(systemData.variables || []),
         switch: loadNamedArrayCatalog(systemData.switches || []),
@@ -119,22 +122,25 @@
     process.env.DQ2_GAME_ROOT = rootDir;
     function resolveGameRoot(projectRoot) {
         const candidates = [];
-        if (process.env.DQ2_GAME_ROOT)
-            candidates.push(process.env.DQ2_GAME_ROOT);
         try {
             const configPath = path.join(projectRoot, "config.local.json");
             if (fs.existsSync(configPath)) {
                 const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
                 if (config && config.gameRoot)
-                    candidates.push(String(config.gameRoot));
+                    candidates.push({ value: String(config.gameRoot), base: projectRoot });
             }
         }
         catch (error) {
             throw new Error("Invalid config.local.json: " + (error && error.message || error));
         }
-        candidates.push(path.resolve(projectRoot, ".."));
+        candidates.push({ value: path.resolve(projectRoot, ".."), base: projectRoot });
+        if (process.env.DQ2_GAME_ROOT)
+            candidates.push({ value: process.env.DQ2_GAME_ROOT, base: projectRoot });
         for (const candidate of candidates) {
-            const fullPath = path.resolve(projectRoot, expandEnv(candidate));
+            const expanded = expandEnv(candidate.value);
+            const fullPath = path.isAbsolute(expanded)
+                ? path.resolve(expanded)
+                : path.resolve(candidate.base, expanded);
             if (fs.existsSync(path.join(fullPath, "www", "index.html"))) {
                 return fs.realpathSync(fullPath);
             }
@@ -159,6 +165,12 @@
         catch {
             return null;
         }
+    }
+    function loadGuiCache() {
+        const cache = readJson(guiCachePath);
+        if (!cache || cache.version !== GUI_CACHE_VERSION)
+            return null;
+        return cache;
     }
     function loadCatalog(fileName) {
         try {
@@ -334,6 +346,8 @@
         };
     }
     function loadHuntMapCatalog() {
+        if (guiCache && Array.isArray(guiCache.huntMap))
+            return guiCache.huntMap;
         const mapInfos = readJson(path.join(dataDir, "MapInfos.json")) || [];
         const troops = readJson(path.join(dataDir, "Troops.json")) || [];
         const enemies = readJson(path.join(dataDir, "Enemies.json")) || [];
@@ -420,6 +434,8 @@
         }
     }
     function loadTroopCatalog() {
+        if (guiCache && Array.isArray(guiCache.troop))
+            return guiCache.troop;
         const troops = readJson(path.join(dataDir, "Troops.json")) || [];
         const enemies = readJson(path.join(dataDir, "Enemies.json")) || [];
         const tables = localDropTables();
