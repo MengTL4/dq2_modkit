@@ -18,7 +18,7 @@ declare const nw: any;
   const guiCachePath = path.join(dataDir, "_gui-cache.json");
   const iconDir = path.join(process.cwd(), "icons");
   const iconSetPath = path.join(rootDir, "www", "img", "system", "IconSet.png");
-  const EXPECTED_BRIDGE_VERSION = "0.2.28";
+  const EXPECTED_BRIDGE_VERSION = "0.2.29";
   const GUI_CACHE_VERSION = 1;
 
   const $ = (id: string): any => document.getElementById(id);
@@ -1684,6 +1684,10 @@ declare const nw: any;
       save: !!$("offlineHuntSave").checked,
       saveSlot: numberValue("offlineHuntSaveSlot", 1),
       nativeDrops: !!$("offlineHuntNativeDrops").checked,
+      specialBoost: !!$("offlineHuntSpecialBoost").checked,
+      specialRate: numberValue("offlineHuntSpecialRate", 10),
+      forceShenMiao: !!$("offlineHuntForceShenMiao").checked,
+      forceTiangong: !!$("offlineHuntForceTiangong").checked,
       autoSellQualities: selectedOfflineQualities([
         ["offlineAutoSellRough", 0],
         ["offlineAutoSellNormal", 1],
@@ -1977,6 +1981,7 @@ declare const nw: any;
       `金币 ${formatNumber(last.gold || 0)}`,
       last.autoSell && last.autoSell.gold ? `自动卖 ${formatNumber(last.autoSell.gold)} 金币` : "",
       last.blockedDrops && last.blockedDrops.count ? `屏蔽 ${formatNumber(last.blockedDrops.count)} 件` : "",
+      last.specialAffixes && last.specialAffixes.count ? `特殊 ${formatNumber(last.specialAffixes.count)} 条` : "",
       last.dropMode === "runtime"
         ? `原生入包 ${formatNumber(last.runtimeDropCount || 0)} / 数据抽样 ${formatNumber(last.dataDropCount || 0)}`
         : "数据掉落",
@@ -1996,6 +2001,11 @@ declare const nw: any;
     const blocked = compactListHtml(last.blockedDrops && last.blockedDrops.summary, "无屏蔽", (row) =>
       `<span class="result-chip">${escapeHtml(itemKindLabels[row.kind] || row.kind || "")}:${escapeHtml(dropChipName(row))} x${formatNumber(row.count)}</span>`
     , 16);
+    const specialAffixes = last.specialAffixes || {};
+    const specialLabels = Object.entries(specialAffixes.byLabel || {}).map(([label, count]) => ({ label, count }));
+    const specials = compactListHtml(specialLabels, "无额外特殊词缀", (row) =>
+      `<span class="result-chip">${escapeHtml(row.label)} x${formatNumber(row.count)}</span>`
+    , 8);
     const kindCounts = last.dropKindCounts || {};
     const dropKinds = [
       `物品 ${formatNumber(kindCounts.item || 0)} 种`,
@@ -2006,6 +2016,7 @@ declare const nw: any;
       <div><strong>遇敌</strong>${troops}</div>
       <div><strong>分类</strong><span>${escapeHtml(dropKinds)}</span></div>
       <div><strong>掉落</strong>${drops}</div>
+      <div><strong>特殊词缀</strong><span>${formatNumber(specialAffixes.count || 0)} 条</span>${specials}</div>
       <div><strong>自动卖出</strong><span>${formatNumber(last.autoSell && last.autoSell.gold || 0)} 金币</span>${sold}</div>
       <div><strong>已屏蔽</strong>${blocked}</div>
     `;

@@ -595,6 +595,10 @@ label span {
   margin-top: 12px;
 }
 
+.offline-loot-options > .wide-option {
+  grid-column: 1 / -1;
+}
+
 .option-title {
   display: block;
   margin-bottom: 8px;
@@ -607,6 +611,10 @@ label span {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.special-toggle-grid {
+  align-items: center;
 }
 
 .check-line {
@@ -633,6 +641,18 @@ label span {
   grid-template-columns: auto 92px;
   align-items: center;
   gap: 8px;
+}
+
+.special-rate-line {
+  display: inline-grid;
+  width: 116px;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.special-rate-line select {
+  height: 36px;
 }
 
 .offline-result {
