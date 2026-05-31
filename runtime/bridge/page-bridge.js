@@ -2,7 +2,7 @@
   if (window.__codexLocalTrainerBridge) return;
 
   const bridge = {
-    version: "0.2.25",
+    version: "0.2.26",
     startedAt: new Date().toISOString(),
     startedAtMs: Date.now(),
     processed: Object.create(null),
@@ -1661,13 +1661,13 @@
 
   function qualityLabel(quality) {
     const labels = {
-      0: "劣品",
-      1: "凡品",
-      2: "良品",
-      3: "精品",
-      4: "真品",
-      5: "极品",
-      6: "传说",
+      0: "粗糙",
+      1: "普通",
+      2: "优秀",
+      3: "精良",
+      4: "史诗",
+      5: "传说",
+      6: "神器",
       7: "传承",
       8: "不朽"
     };

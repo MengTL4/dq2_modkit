@@ -14,7 +14,7 @@
     const dataDir = path.join(projectRoot, "output", "extract", "data");
     const iconDir = path.join(process.cwd(), "icons");
     const iconSetPath = path.join(rootDir, "www", "img", "system", "IconSet.png");
-    const EXPECTED_BRIDGE_VERSION = "0.2.25";
+    const EXPECTED_BRIDGE_VERSION = "0.2.26";
     const $ = (id) => document.getElementById(id);
     const dom = {
         statusPill: $("statusPill"),
@@ -1667,19 +1667,19 @@
             save: !!$("offlineHuntSave").checked,
             saveSlot: numberValue("offlineHuntSaveSlot", 1),
             autoSellQualities: selectedOfflineQualities([
-                ["offlineAutoSellPoor", 0],
-                ["offlineAutoSellCommon", 1],
-                ["offlineAutoSellGood", 2],
+                ["offlineAutoSellRough", 0],
+                ["offlineAutoSellNormal", 1],
+                ["offlineAutoSellExcellent", 2],
                 ["offlineAutoSellFine", 3],
-                ["offlineAutoSellGenuine", 4],
-                ["offlineAutoSellSupreme", 5],
-                ["offlineAutoSellLegendary", 6],
-                ["offlineAutoSellInheritance", 7],
+                ["offlineAutoSellEpic", 4],
+                ["offlineAutoSellLegendary", 5],
+                ["offlineAutoSellArtifact", 6],
+                ["offlineAutoSellHeritage", 7],
                 ["offlineAutoSellImmortal", 8]
             ]),
             blockDropQualities: selectedOfflineQualities([
-                ["offlineBlockCommon", 1],
-                ["offlineBlockGood", 2],
+                ["offlineBlockNormal", 1],
+                ["offlineBlockExcellent", 2],
                 ["offlineBlockFine", 3]
             ])
         };
