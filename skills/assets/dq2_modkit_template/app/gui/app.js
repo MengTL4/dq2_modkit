@@ -15,7 +15,7 @@
     const guiCachePath = path.join(dataDir, "_gui-cache.json");
     const iconDir = path.join(process.cwd(), "icons");
     const iconSetPath = path.join(rootDir, "www", "img", "system", "IconSet.png");
-    const EXPECTED_BRIDGE_VERSION = "0.2.27";
+    const EXPECTED_BRIDGE_VERSION = "0.2.28";
     const GUI_CACHE_VERSION = 1;
     const $ = (id) => document.getElementById(id);
     const dom = {
@@ -1987,7 +1987,7 @@
             last.autoSell && last.autoSell.gold ? `自动卖 ${formatNumber(last.autoSell.gold)} 金币` : "",
             last.blockedDrops && last.blockedDrops.count ? `屏蔽 ${formatNumber(last.blockedDrops.count)} 件` : "",
             last.dropMode === "runtime"
-                ? `原生掉落 ${formatNumber(last.runtimeDropCount || 0)} / 数据样本 ${formatNumber(last.dataDropCount || 0)}`
+                ? `原生入包 ${formatNumber(last.runtimeDropCount || 0)} / 数据抽样 ${formatNumber(last.dataDropCount || 0)}`
                 : "数据掉落",
             `掉落 ${formatNumber((last.dropSummary || []).length)} 种`,
             last.enemyBook && last.enemyBook.count ? `图鉴 ${last.enemyBook.count}` : "",

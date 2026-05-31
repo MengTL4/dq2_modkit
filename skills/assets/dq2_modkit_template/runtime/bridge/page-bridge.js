@@ -2,7 +2,7 @@
   if (window.__codexLocalTrainerBridge) return;
 
   const bridge = {
-    version: "0.2.27",
+    version: "0.2.28",
     startedAt: new Date().toISOString(),
     startedAtMs: Date.now(),
     processed: Object.create(null),
@@ -1818,25 +1818,69 @@
     return { action: "keep", summary, price: 0 };
   }
 
+  function itemContainerForKind(party, kind) {
+    if (!party) return null;
+    if (kind === "weapon") return party._weapons || null;
+    if (kind === "armor") return party._armors || null;
+    if (kind === "item") return party._items || null;
+    return null;
+  }
+
+  function countSnapshot(container) {
+    const snapshot = Object.create(null);
+    if (!container || typeof container !== "object") return snapshot;
+    Object.keys(container).forEach((key) => {
+      snapshot[key] = Number(container[key] || 0);
+    });
+    return snapshot;
+  }
+
+  function gainedItemsFromSnapshot(party, kind, before, fallbackItem) {
+    const container = itemContainerForKind(party, kind);
+    const table = dropTable(kind);
+    const result = [];
+    if (container && typeof container === "object") {
+      Object.keys(container).forEach((key) => {
+        const diff = Number(container[key] || 0) - Number(before[key] || 0);
+        if (diff <= 0) return;
+        const item = table && table[Math.floor(looseNumber(key))] || fallbackItem;
+        for (let index = 0; index < diff; index += 1) result.push(item);
+      });
+    }
+    return result.length ? result : [fallbackItem].filter(Boolean);
+  }
+
   function gainOfflineItem(party, item) {
-    if (!party || typeof party.gainItem !== "function" || !item) return false;
+    if (!party || typeof party.gainItem !== "function" || !item) return { ok: false, items: [] };
+    const summary = itemSummary(item);
+    const kind = summary && summary.kind || itemKindOfObject(item);
+    if (kind === "item") {
+      try {
+        party.gainItem(item, 1);
+        return { ok: true, items: [item] };
+      } catch (error) {
+        bridge.lastError = String(error && error.stack || error);
+        return { ok: false, items: [] };
+      }
+    }
+    const before = countSnapshot(itemContainerForKind(party, kind));
     try {
       party.gainItem(item, 1);
-      return true;
+      return { ok: true, items: gainedItemsFromSnapshot(party, kind, before, item) };
     } catch (error) {
-      const summary = itemSummary(item);
       const baseId = summary && (summary.baseItemId || summary.id);
       const base = summary && baseId ? dropTable(summary.kind)[baseId] || dropTable(summary.kind)[summary.id] : null;
       if (!base || base === item) {
         bridge.lastError = String(error && error.stack || error);
-        return false;
+        return { ok: false, items: [] };
       }
+      const fallbackBefore = countSnapshot(itemContainerForKind(party, summary.kind));
       try {
         party.gainItem(base, 1);
-        return true;
+        return { ok: true, items: gainedItemsFromSnapshot(party, summary.kind, fallbackBefore, base) };
       } catch (fallbackError) {
         bridge.lastError = String(fallbackError && fallbackError.stack || fallbackError);
-        return false;
+        return { ok: false, items: [] };
       }
     }
   }
@@ -1966,7 +2010,9 @@
     };
   }
 
-  function runtimeTroopReward(troopId) {
+  function runtimeTroopReward(troopId, options) {
+    options = options || {};
+    const includeDrops = options.includeDrops !== false;
     const troop = createOfflineTroop(troopId);
     if (!troop) return null;
     try {
@@ -1989,7 +2035,7 @@
         .filter(Boolean);
       const exp = typeof troop.expTotal === "function" ? Number(troop.expTotal() || 0) : 0;
       const gold = typeof troop.goldTotal === "function" ? Number(troop.goldTotal() || 0) : 0;
-      const items = typeof troop.makeDropItems === "function" ? troop.makeDropItems().filter(Boolean) : [];
+      const items = includeDrops && typeof troop.makeDropItems === "function" ? troop.makeDropItems().filter(Boolean) : [];
       return { exp, gold, items, enemyIds, source: "runtime" };
     } catch (error) {
       bridge.lastError = String(error && error.stack || error);
@@ -2023,23 +2069,25 @@
 
   function offlineTroopReward(troopId, config) {
     config = config || offlineLootConfig({});
-    const runtimeReward = runtimeTroopReward(troopId);
     const dataReward = dataTroopReward(troopId);
+    const runtimeReward = runtimeTroopReward(troopId, { includeDrops: !dataReward });
     if (runtimeReward) {
       const runtimeEnemyIds = Array.isArray(runtimeReward.enemyIds) ? runtimeReward.enemyIds : [];
       const dataEnemyIds = dataReward && Array.isArray(dataReward.enemyIds) ? dataReward.enemyIds : [];
       const runtimeItems = Array.isArray(runtimeReward.items) ? runtimeReward.items : [];
       const dataItems = dataReward && Array.isArray(dataReward.items) ? dataReward.items : [];
       const useNativeDrops = config.dropMode === "runtime";
-      const chosenItems = useNativeDrops ? runtimeItems : (dataReward ? dataItems : runtimeItems);
+      const chosenItems = dataReward ? dataItems : runtimeItems;
       return {
         exp: runtimeReward.exp,
         gold: runtimeReward.gold,
         items: chosenItems,
         enemyIds: uniqueNumericIds(runtimeEnemyIds.concat(dataEnemyIds)),
-        source: useNativeDrops ? "runtimeDrops" : (dataReward ? "runtime+dataDrops" : "runtime"),
+        source: useNativeDrops
+          ? (dataReward ? "runtime+dataDrops+independent" : "runtimeDrops")
+          : (dataReward ? "runtime+dataDrops" : "runtime"),
         dropMode: useNativeDrops ? "runtime" : "data",
-        runtimeDropCount: runtimeItems.length,
+        runtimeDropCount: useNativeDrops ? chosenItems.length : runtimeItems.length,
         dataDropCount: dataItems.length
       };
     }
@@ -2316,7 +2364,6 @@
           autoSellGold += decision.price;
           addDropGroup(autoSellGroups, item, 1);
         } else {
-          addDropGroup(dropGroups, item, 1);
           keptItems.push(item);
         }
       });
@@ -2332,7 +2379,14 @@
       });
       if (typeof party.gainGold === "function") party.gainGold(gold);
       else party._gold = Math.max(0, Number(party._gold || 0) + gold);
-      keptItems.forEach(item => gainOfflineItem(party, item));
+      keptItems.forEach((item) => {
+        const gained = gainOfflineItem(party, item);
+        if (gained.ok && gained.items.length) {
+          gained.items.forEach(gainedItem => addDropGroup(dropGroups, gainedItem || item, 1));
+        } else {
+          addDropGroup(dropGroups, item, 1);
+        }
+      });
     });
 
     let enemyBook = null;
