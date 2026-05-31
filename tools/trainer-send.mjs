@@ -40,8 +40,9 @@ function usage() {
   node trainer-send.mjs offlineHunt.info
   node trainer-send.mjs offlineHunt.preview 31
   node trainer-send.mjs offlineHunt.preview troopId=192
+  node trainer-send.mjs offlineHunt.probe troopId=192 times=50
   node trainer-send.mjs offlineHunt.run mapId=31 times=10 enemyBook=true recover=true save=false autoSellQualities=0,1,2 blockDropQualities=1,2,3
-  node trainer-send.mjs offlineHunt.run troopId=192 times=10 enemyBook=true save=false autoSellQualities=0,1,2,3,4,5,6,7,8
+  node trainer-send.mjs offlineHunt.run troopId=192 times=10 nativeDrops=true enemyBook=true save=false autoSellQualities=0,1,2,3,4,5,6,7,8
   node trainer-send.mjs runtime.search fish fishing 钓 鱼
   node trainer-send.mjs runtime.inspect window.TK.$ 300
   node trainer-send.mjs fishing.info
@@ -84,7 +85,9 @@ function makeOfflineHuntCommand(type, args) {
   return {
     type,
     mapId: type === "offlineHunt.info" && args[0] === undefined ? undefined : Number(args[0] || 31),
-    times: type === "offlineHunt.run" ? Number(args[1] || 10) : undefined,
+    times: type === "offlineHunt.run" || type === "offlineHunt.probe"
+      ? Number(args[1] || (type === "offlineHunt.probe" ? 20 : 10))
+      : undefined,
     regionId: args[2] === undefined ? undefined : Number(args[2]),
     troopId: args[3] === undefined ? undefined : Number(args[3]),
     enemyBook: args[4] === undefined ? undefined : parseValue(args[4]),
@@ -124,6 +127,7 @@ function makeCommand(argv) {
   if (type === "hangup.refresh") return { type };
   if (type === "offlineHunt.info") return makeOfflineHuntCommand(type, argv.slice(1));
   if (type === "offlineHunt.preview") return makeOfflineHuntCommand(type, argv.slice(1));
+  if (type === "offlineHunt.probe") return makeOfflineHuntCommand(type, argv.slice(1));
   if (type === "offlineHunt.run") return makeOfflineHuntCommand(type, argv.slice(1));
   if (type === "party.recover") return { type };
   if (type === "trainer.options.get") return { type };

@@ -17,7 +17,7 @@ declare const nw: any;
   const dataDir = path.join(projectRoot, "output", "extract", "data");
   const iconDir = path.join(process.cwd(), "icons");
   const iconSetPath = path.join(rootDir, "www", "img", "system", "IconSet.png");
-  const EXPECTED_BRIDGE_VERSION = "0.2.26";
+  const EXPECTED_BRIDGE_VERSION = "0.2.27";
 
   const $ = (id: string): any => document.getElementById(id);
   const dom = {
@@ -1669,6 +1669,7 @@ declare const nw: any;
       recover: !!$("offlineHuntRecover").checked,
       save: !!$("offlineHuntSave").checked,
       saveSlot: numberValue("offlineHuntSaveSlot", 1),
+      nativeDrops: !!$("offlineHuntNativeDrops").checked,
       autoSellQualities: selectedOfflineQualities([
         ["offlineAutoSellRough", 0],
         ["offlineAutoSellNormal", 1],
@@ -1962,6 +1963,9 @@ declare const nw: any;
       `金币 ${formatNumber(last.gold || 0)}`,
       last.autoSell && last.autoSell.gold ? `自动卖 ${formatNumber(last.autoSell.gold)} 金币` : "",
       last.blockedDrops && last.blockedDrops.count ? `屏蔽 ${formatNumber(last.blockedDrops.count)} 件` : "",
+      last.dropMode === "runtime"
+        ? `原生掉落 ${formatNumber(last.runtimeDropCount || 0)} / 数据样本 ${formatNumber(last.dataDropCount || 0)}`
+        : "数据掉落",
       `掉落 ${formatNumber((last.dropSummary || []).length)} 种`,
       last.enemyBook && last.enemyBook.count ? `图鉴 ${last.enemyBook.count}` : "",
       last.saved ? `已保存 ${last.saved.id}` : ""

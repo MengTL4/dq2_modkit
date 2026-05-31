@@ -2,7 +2,7 @@
   if (window.__codexLocalTrainerBridge) return;
 
   const bridge = {
-    version: "0.2.26",
+    version: "0.2.27",
     startedAt: new Date().toISOString(),
     startedAtMs: Date.now(),
     processed: Object.create(null),
@@ -1583,16 +1583,40 @@
 
   function itemKindOfObject(item) {
     if (!item) return "";
-    const id = Number(item.id);
+    const id = Math.floor(looseNumber(item.id));
+    const baseId = itemBaseId(item);
     for (const kind of ["item", "weapon", "armor"]) {
       const table = dataTable(kind);
       if (table && table[id] === item) return kind;
     }
+    if (item.wtypeId != null || item._wtypeId != null) return "weapon";
+    if (item.atypeId != null || item._atypeId != null) return "armor";
+    if (item.itypeId != null || item._itypeId != null || item.consumable != null) return "item";
     for (const kind of ["item", "weapon", "armor"]) {
       const table = dataTable(kind);
       if (table && table[id] && table[id].name === item.name) return kind;
     }
+    const baseName = String(item.baseItemName || item._baseItemName || "");
+    if (baseId > 0) {
+      const candidates = ["weapon", "armor", "item"].filter((kind) => {
+        const table = dataTable(kind);
+        return table && table[baseId];
+      });
+      const named = candidates.find((kind) => dataTable(kind)[baseId].name === baseName);
+      if (named) return named;
+      if (candidates.length === 1) return candidates[0];
+    }
     return "item";
+  }
+
+  function itemBaseId(item) {
+    if (!item || typeof item !== "object") return 0;
+    const values = [item.baseItemId, item.baseId, item._baseItemId, item._baseId, item.id];
+    for (const value of values) {
+      const id = Math.floor(looseNumber(value));
+      if (Number.isFinite(id) && id > 0) return id;
+    }
+    return 0;
   }
 
   function itemSummary(item) {
@@ -1600,11 +1624,16 @@
     const kind = itemKindOfObject(item);
     const quality = itemQuality(item, kind);
     const specialLabels = itemSpecialLabels(item);
+    const id = Math.floor(looseNumber(item.id));
+    const baseItemId = itemBaseId(item);
+    const base = baseItemId > 0 ? dropTable(kind)[baseItemId] : null;
     return {
       kind,
-      id: Number(item.id || 0),
-      name: String(item.name || ""),
-      iconIndex: Number(item.iconIndex || 0),
+      id: Number.isFinite(id) ? id : 0,
+      baseItemId,
+      independent: baseItemId > 0 && Number.isFinite(id) && id > 0 && baseItemId !== id,
+      name: String(item.name || base && base.name || ""),
+      iconIndex: Number(item.iconIndex || base && base.iconIndex || 0),
       quality,
       qualityLabel: qualityLabel(quality),
       specialLabels
@@ -1613,15 +1642,27 @@
 
   function itemKey(summary) {
     const special = Array.isArray(summary.specialLabels) ? summary.specialLabels.join("|") : "";
-    return `${summary.kind}:${summary.id}:${summary.name}:${special}`;
+    return `${summary.kind}:${summary.id}:${summary.baseItemId || 0}:${summary.name}:${summary.quality}:${special}`;
   }
 
   function addDropGroup(groups, item, count) {
     const summary = itemSummary(item);
     if (!summary || !summary.id) return;
     const key = itemKey(summary);
-    if (!groups[key]) groups[key] = { ...summary, count: 0 };
+    if (!groups[key]) groups[key] = { ...summary, count: 0, _items: [] };
     groups[key].count += count || 1;
+    if (groups[key]._items.length < 20) groups[key]._items.push(item);
+  }
+
+  function dropGroupRows(groups, limit) {
+    return Object.values(groups)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit)
+      .map((entry) => {
+        const row = { ...entry };
+        delete row._items;
+        return row;
+      });
   }
 
   function itemQuality(item, kind) {
@@ -1678,7 +1719,7 @@
     if (!item || typeof item !== "object") return [];
     const parts = [];
     const pushText = (value, depth = 0) => {
-      if (value == null || depth > 1) return;
+      if (value == null || depth > 2) return;
       if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
         parts.push(String(value));
         return;
@@ -1689,7 +1730,7 @@
       }
       if (typeof value === "object") {
         Object.keys(value).slice(0, 60).forEach((key) => {
-          if (/name|note|desc|text|label|prefix|suffix|affix|trait|quality|rarity|shen|tian|bailian|妙|天工|百炼/i.test(key)) {
+          if (/name|note|desc|text|label|prefix|suffix|affix|trait|quality|rarity|param|effect|augment|slot|attach|detach|shen|tian|bailian|妙|天工|百炼/i.test(key)) {
             pushText(value[key], depth + 1);
           }
         });
@@ -1707,6 +1748,16 @@
       item._affix,
       item.qualityName,
       item.rarityName,
+      item.descParams,
+      item._descCT,
+      item._descMosaic,
+      item.augmentSlots,
+      item.augmentTypes,
+      item.augmentDataAttach,
+      item.augmentDataDetach,
+      item.upgradeWeaponEffect,
+      item.upgradeArmorEffect,
+      item.traits,
       item.meta
     ].forEach(value => pushText(value));
     const text = parts.join("\n");
@@ -1736,7 +1787,12 @@
   }
 
   function offlineLootConfig(command) {
+    command = command || {};
+    const rawMode = String(command.dropMode || (toBool(command.nativeDrops) ? "runtime" : "data")).toLowerCase();
+    const dropMode = rawMode === "runtime" || rawMode === "native" ? "runtime" : "data";
     return {
+      dropMode,
+      nativeDrops: dropMode === "runtime",
       autoSellQualities: normalizeQualitySet(command.autoSellQualities),
       blockDropQualities: normalizeQualitySet(command.blockDropQualities)
     };
@@ -1760,6 +1816,29 @@
       return { action: "sell", summary, price: offlineSellPrice(item) };
     }
     return { action: "keep", summary, price: 0 };
+  }
+
+  function gainOfflineItem(party, item) {
+    if (!party || typeof party.gainItem !== "function" || !item) return false;
+    try {
+      party.gainItem(item, 1);
+      return true;
+    } catch (error) {
+      const summary = itemSummary(item);
+      const baseId = summary && (summary.baseItemId || summary.id);
+      const base = summary && baseId ? dropTable(summary.kind)[baseId] || dropTable(summary.kind)[summary.id] : null;
+      if (!base || base === item) {
+        bridge.lastError = String(error && error.stack || error);
+        return false;
+      }
+      try {
+        party.gainItem(base, 1);
+        return true;
+      } catch (fallbackError) {
+        bridge.lastError = String(fallbackError && fallbackError.stack || fallbackError);
+        return false;
+      }
+    }
   }
 
   function noteEnemyDrops(enemy, rate) {
@@ -1942,24 +2021,99 @@
     return { exp: preview.exp, gold: preview.gold, items, enemyIds: preview.enemies.map(enemy => enemy.id), source: "data" };
   }
 
-  function offlineTroopReward(troopId) {
+  function offlineTroopReward(troopId, config) {
+    config = config || offlineLootConfig({});
     const runtimeReward = runtimeTroopReward(troopId);
     const dataReward = dataTroopReward(troopId);
     if (runtimeReward) {
       const runtimeEnemyIds = Array.isArray(runtimeReward.enemyIds) ? runtimeReward.enemyIds : [];
       const dataEnemyIds = dataReward && Array.isArray(dataReward.enemyIds) ? dataReward.enemyIds : [];
+      const runtimeItems = Array.isArray(runtimeReward.items) ? runtimeReward.items : [];
+      const dataItems = dataReward && Array.isArray(dataReward.items) ? dataReward.items : [];
+      const useNativeDrops = config.dropMode === "runtime";
+      const chosenItems = useNativeDrops ? runtimeItems : (dataReward ? dataItems : runtimeItems);
       return {
         exp: runtimeReward.exp,
         gold: runtimeReward.gold,
-        // The game's custom drop plugin is tied to real battle context. Temporary
-        // Game_Troop drops can go stale after the first offline run, so simulate
-        // drops from data while keeping runtime exp/gold totals.
-        items: dataReward ? dataReward.items : runtimeReward.items,
+        items: chosenItems,
         enemyIds: uniqueNumericIds(runtimeEnemyIds.concat(dataEnemyIds)),
-        source: dataReward ? "runtime+dataDrops" : "runtime"
+        source: useNativeDrops ? "runtimeDrops" : (dataReward ? "runtime+dataDrops" : "runtime"),
+        dropMode: useNativeDrops ? "runtime" : "data",
+        runtimeDropCount: runtimeItems.length,
+        dataDropCount: dataItems.length
       };
     }
-    return dataReward;
+    return dataReward ? {
+      ...dataReward,
+      dropMode: "data",
+      runtimeDropCount: 0,
+      dataDropCount: Array.isArray(dataReward.items) ? dataReward.items.length : 0
+    } : null;
+  }
+
+  function offlineHuntProbe(command) {
+    command = command || {};
+    const fixedTroopId = command.troopId == null || command.troopId === "" ? 0 : Math.floor(requireNumber(command.troopId, "troopId"));
+    const mapId = fixedTroopId > 0 || command.mapId == null || command.mapId === ""
+      ? 0
+      : Math.floor(requireNumber(command.mapId, "mapId"));
+    const regionId = command.regionId == null || command.regionId === "" ? 0 : Math.floor(requireNumber(command.regionId, "regionId"));
+    const times = Math.max(1, Math.min(200, Math.floor(requireNumber(command.times || 20, "times"))));
+    const encounters = fixedTroopId > 0
+      ? [{ troopId: fixedTroopId, weight: 1, regionSet: [] }]
+      : offlineEncounterList(mapId, regionId);
+    if (!encounters.length) throw new Error(`map ${mapId} has no encounter list`);
+
+    const runtimeGroups = Object.create(null);
+    const dataGroups = Object.create(null);
+    const troops = Object.create(null);
+    let runtimeCalls = 0;
+    let dataCalls = 0;
+    let runtimeItems = 0;
+    let dataItems = 0;
+
+    for (let index = 0; index < times; index += 1) {
+      const encounter = chooseWeightedEncounter(encounters);
+      const troopId = encounter && encounter.troopId;
+      const preview = troopDataPreview(troopId);
+      if (!troops[troopId]) troops[troopId] = { id: troopId, name: preview && preview.name || "", count: 0 };
+      troops[troopId].count += 1;
+      const runtimeReward = runtimeTroopReward(troopId);
+      if (runtimeReward) {
+        runtimeCalls += 1;
+        (runtimeReward.items || []).forEach((item) => {
+          runtimeItems += 1;
+          addDropGroup(runtimeGroups, item, 1);
+        });
+      }
+      const dataReward = dataTroopReward(troopId);
+      if (dataReward) {
+        dataCalls += 1;
+        (dataReward.items || []).forEach((item) => {
+          dataItems += 1;
+          addDropGroup(dataGroups, item, 1);
+        });
+      }
+    }
+
+    const tk = window.TK || {};
+    return {
+      mode: fixedTroopId > 0 ? "troop" : "map",
+      mapId,
+      fixedTroopId,
+      regionId,
+      times,
+      runtimeCalls,
+      dataCalls,
+      runtimeItems,
+      dataItems,
+      nativeFunctions: ["GetDrop", "GetDropAll", "GetDropArr", "getIndependentItemById", "SDC_addTempItem", "autoSellEquips"]
+        .filter(name => typeof tk[name] === "function")
+        .map(name => ({ name, length: tk[name].length })),
+      troopSummary: Object.values(troops).sort((a, b) => b.count - a.count),
+      runtimeDropSummary: dropGroupRows(runtimeGroups, 80),
+      dataDropSummary: dropGroupRows(dataGroups, 80)
+    };
   }
 
   function offlineEncounterList(mapId, regionId) {
@@ -2121,6 +2275,7 @@
     const blockedDropGroups = Object.create(null);
     const enemyIds = [];
     const lootConfig = offlineLootConfig(command);
+    const keptItems = [];
     let baseExp = 0;
     let baseGold = 0;
     let autoSellGold = 0;
@@ -2128,15 +2283,19 @@
     let blockedDropCount = 0;
     let runtimeCount = 0;
     let dataCount = 0;
+    let runtimeDropCount = 0;
+    let dataDropCount = 0;
 
     for (let index = 0; index < times; index += 1) {
       const encounter = chooseWeightedEncounter(encounters);
       const troopId = encounter && encounter.troopId;
-      const reward = offlineTroopReward(troopId);
+      const reward = offlineTroopReward(troopId, lootConfig);
       const preview = troopDataPreview(troopId);
       if (!reward) continue;
       if (String(reward.source || "").startsWith("runtime")) runtimeCount += 1;
       else dataCount += 1;
+      runtimeDropCount += Number(reward.runtimeDropCount || 0);
+      dataDropCount += Number(reward.dataDropCount || 0);
       baseExp += Number(reward.exp || 0);
       baseGold += Number(reward.gold || 0);
       const troopKey = String(troopId);
@@ -2158,6 +2317,7 @@
           addDropGroup(autoSellGroups, item, 1);
         } else {
           addDropGroup(dropGroups, item, 1);
+          keptItems.push(item);
         }
       });
     }
@@ -2172,10 +2332,7 @@
       });
       if (typeof party.gainGold === "function") party.gainGold(gold);
       else party._gold = Math.max(0, Number(party._gold || 0) + gold);
-      Object.values(dropGroups).forEach((drop) => {
-        const item = dropTable(drop.kind)[drop.id];
-        if (item && typeof party.gainItem === "function") party.gainItem(item, drop.count);
-      });
+      keptItems.forEach(item => gainOfflineItem(party, item));
     });
 
     let enemyBook = null;
@@ -2208,19 +2365,24 @@
       dropRate: Number(bridge.options.dropRate || 1),
       runtimeCount,
       dataCount,
+      runtimeDropCount,
+      dataDropCount,
+      dropMode: lootConfig.dropMode,
       troopSummary: Object.values(troopGroups).sort((a, b) => b.count - a.count),
       enemySummary: Object.values(enemyGroups).sort((a, b) => b.count - a.count).slice(0, 120),
-      dropSummary: Object.values(dropGroups).sort((a, b) => b.count - a.count).slice(0, 120),
+      dropSummary: dropGroupRows(dropGroups, 120),
       autoSell: {
         count: autoSellCount,
         gold: autoSellGold,
-        summary: Object.values(autoSellGroups).sort((a, b) => b.count - a.count).slice(0, 80)
+        summary: dropGroupRows(autoSellGroups, 80)
       },
       blockedDrops: {
         count: blockedDropCount,
-        summary: Object.values(blockedDropGroups).sort((a, b) => b.count - a.count).slice(0, 80)
+        summary: dropGroupRows(blockedDropGroups, 80)
       },
       lootOptions: {
+        dropMode: lootConfig.dropMode,
+        nativeDrops: lootConfig.nativeDrops,
         autoSellQualities: Array.from(lootConfig.autoSellQualities),
         blockDropQualities: Array.from(lootConfig.blockDropQualities)
       },
@@ -3012,6 +3174,9 @@
       const preview = offlineHuntPreview(command);
       bridge.offlineHuntStats.preview = { ts: Date.now(), ...preview };
       return preview;
+    }
+    if (type === "offlineHunt.probe") {
+      return offlineHuntProbe(command);
     }
     if (type === "offlineHunt.run") {
       return runOfflineHunt(command);
